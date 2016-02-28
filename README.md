@@ -1,2 +1,2 @@
 # ia_ros
-This repository regroup ros package which use interval analysis
+This repository regroup ros packages which use interval analysis.

@@ -1,0 +1,18 @@
+<library path="lib/librviz_ia_plugins">
+  <class name="rviz_ia_plugins/Interval"
+         type="rviz_ia_plugins::IntervalDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays interval boxes 2D.
+    </description>
+    <message_type>ia_msgs/Interval</message_type>
+  </class>
+  <class name="rviz_ia_plugins/Interval3D"
+         type="rviz_ia_plugins::Interval3DDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays interval boxes 3D.
+    </description>
+    <message_type>ia_msgs/Interval</message_type>
+  </class>
+</library>

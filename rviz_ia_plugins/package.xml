@@ -1,0 +1,23 @@
+<package>
+  <name>rviz_ia_plugins</name>
+  <version>0.0.1</version>
+  <description>
+     Plugin to display interval(from Interval Analysis) boxes 2D (3D to come) 
+  </description>
+  <maintainer email="elouan.autret@ensta-bretagne.org">Elouan Autret</maintainer>
+  <license>BSD</license>
+
+  <author>Elouan Autret</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rviz</build_depend>
+  <build_depend>ia_msgs</build_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>ia_msgs</run_depend>
+
+  <export>
+      <rosdoc config="${prefix}/rosdoc.yaml"/>
+      <rviz plugin="${prefix}/plugin_description.xml"/>
+  </export>
+</package>
