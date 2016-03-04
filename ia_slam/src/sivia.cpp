@@ -92,7 +92,7 @@ void clSIVIA::imSIVIA(const Separator X,const py::list& lst,double rang2,const f
        IntervalVector box=s.top();
        s.pop();
 
-       if (res==IBOOL::IN || res2 ==IBOOL::IN || res3 == IBOOL::IN )
+       if (res==IBOOL::IN  )
        {
           in.push_back(box);
           clSIVIA::drawBox(box,echellePixel,i0,j0);

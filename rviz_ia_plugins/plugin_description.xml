@@ -13,6 +13,6 @@
     <description>
       Displays interval boxes 3D.
     </description>
-    <message_type>ia_msgs/Interval</message_type>
+    <message_type>ia_msgs/Interval3D</message_type>
   </class>
 </library>

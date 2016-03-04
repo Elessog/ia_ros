@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
    Interval.msg
    Interval3D.msg
    BeaconDist.msg
+   DistInterBeacon.msg
  )
 
 add_service_files(

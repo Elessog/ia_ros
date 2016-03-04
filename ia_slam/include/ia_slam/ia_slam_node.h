@@ -18,6 +18,7 @@
 #include "ia_msgs/Interval.h"
 #include "ia_msgs/BeaconDist.h"
 #include "ia_msgs/Start_Slam.h"
+#include "std_msgs/Float64MultiArray.h"
 #include <tf/transform_listener.h>
 
 using namespace ibex;
@@ -36,13 +37,16 @@ class IaSlam
    double k2_;
    int ros_rate;
    int nb_outliers_;
+   int max_box_;
 
    ros::NodeHandle nh;
    std::string map_frame_;
    std::string base_frame_;
    std::string beacon_topic_;
+   std::string internal_topic_;
    
    ros::Subscriber beacon_sub_;
+   ros::Subscriber internal_sub_;
 
    ros::ServiceServer service_;
    ros::Publisher beacon_pub_;
@@ -53,18 +57,17 @@ class IaSlam
 
    std::map<int,std::pair<Interval,bool> > map;
    std::map<int,std::pair<Interval,bool> > waitMap;
-   std::map<int,IntervalVector* > landmarksMap;
+   std::map<int,std::vector< IntervalVector*> > landmarksMap;
    void beaconDist(const ia_msgs::BeaconDist msg);
+   void internRobot(const std_msgs::Float64MultiArray msg);
    void ia_iter();
-   void propageConstraint();
    void publishInterval();
-   void intervalToMsg(ia_msgs::Interval &interv,const IntervalVector &box);
+   void intervalToMsg(ia_msgs::Interval &interv,const std::vector<IntervalVector*> &boxes);
    void updateState();
-   void distcontract(int id_beacon,Interval &dist);
    void contractPast();
 /////////////////////////////////////
    bool start;
-   bool is_prop_constraint_;
+   std::vector<double> data_robot_;
    IntervalVector *state_vector;
    IntervalVector *dstate_vector;
    IntervalVector *u;
