@@ -11,6 +11,7 @@
   <param name="nb_outliers"  value="3"/>
   <param name="max_box"  value="10"/>
   <param name="gps_precision"  value="1"/>
+  <param name="division_box_rate" value="0.5"/>
 </node>
 
 </launch>

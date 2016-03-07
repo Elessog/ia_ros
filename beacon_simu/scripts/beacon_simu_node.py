@@ -22,7 +22,7 @@ def talker():
         if start:
           for beacon,i in zip(beacons,range(len(beacons))): 
             dist  = m.sqrt((beacon[0]-position.x)**2+(beacon[1]-position.y)**2);
-            if dist < 10:
+            if dist < 50:
               pub.publish(stamp,i,dist,distBeacons[i])
             rate.sleep()
           poses.header = stamp
@@ -45,7 +45,7 @@ if __name__ == '__main__':
        distBeacon = []
        for beac,i in zip(beacons,range(len(beacons))):
            dist = m.sqrt((beacon[0]-beac[0])**2+(beacon[1]-beac[1])**2)
-           if dist <= 10 and not dist == 0:
+           if dist <= 50 and not dist == 0:
               distBeacon.append(DistInterBeacon(i,dist))
        distBeacons.append(distBeacon)
     talker()

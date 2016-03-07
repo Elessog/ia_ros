@@ -21,7 +21,14 @@
 #include "std_msgs/Float64MultiArray.h"
 #include <tf/transform_listener.h>
 
+#include <fstream>
+#include <iostream>
+
 using namespace ibex;
+typedef std::vector<std::pair<Interval*,int> > it_beac;
+typedef std::vector<std::pair<IntervalVector*,it_beac > > past_vector;
+
+
 namespace ia_slam
 {
 
@@ -51,8 +58,10 @@ class IaSlam
    ros::ServiceServer service_;
    ros::Publisher beacon_pub_;
    ros::Publisher position_pub_;
+   ros::Time lastIter;
    double sensorPrecision_;
    double gps_precision_;
+   double division_box_;
   
    bool starterControl(ia_msgs::Start_Slam::Request &req,ia_msgs::Start_Slam::Response &res);
 
@@ -64,9 +73,13 @@ class IaSlam
    void ia_iter();
    void publishInterval();
    void intervalToMsg(ia_msgs::Interval &interv,const std::vector<IntervalVector*> &boxes);
-   void updateState();
+   void updateState(double dtt,bool b);
    void contractPast();
+   void presentToPast();
+   void pastToPresent();
    void distSIVIA(std::vector<IntervalVector*> &in,IntervalVector X,double eps);
+   void contractIterDist(it_beac::iterator &beaconMeas,past_vector::iterator &it);
+   void dump();
 /////////////////////////////////////
    bool start;
    std::vector<double> data_robot_;
@@ -74,7 +87,8 @@ class IaSlam
    IntervalVector *dstate_vector;
    IntervalVector *u;
    IntervalVector *temp_contract_vector; 
-   std::vector<std::pair<IntervalVector*,std::vector<std::pair<Interval*,int> > > > past;
+   past_vector past;
+   std::vector<double> pastDt;
    CtcFixPoint *distContract;
    CtcFwdBwd *c;
    CtcFixPoint *updContract;
@@ -88,6 +102,7 @@ class IaSlam
    Variable *uX;
    Variable *ud;
    Variable *X;
+   Variable *idt;
    Function *distfunc;
    Function *updfunc;
    double dt;

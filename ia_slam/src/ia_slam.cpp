@@ -3,23 +3,8 @@
 using namespace ibex;
 namespace ia_slam 
 {
-void IaSlam::spin(){
-  ros::Rate loop_rate(ros_rate);
 
-  while (ros::ok())
-  {
-    ros::spinOnce();
-    loop_rate.sleep();
-    if (start)
-       ia_iter();
-  }
-}
 
-bool IaSlam::starterControl(ia_msgs::Start_Slam::Request &req,ia_msgs::Start_Slam::Response &res){
-  start = req.demand; 
-  res.result = true;
-  return true;
-}
 
 void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
 {
@@ -59,6 +44,7 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
                }
                i++;
            }
+////////////////////////:managing empty set ////////////////////////
            std::vector<IntervalVector*> baseIntToRemove;
            std::vector<IntervalVector*> otherIntToRemove;
            for (i = 0;i<baseIntTmp.size();i++)
@@ -70,15 +56,29 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
                else
                   (*(landmarksMap[msg.id][i])).put(0,baseIntTmp[i]);
            }
-           for (auto ist = baseIntToRemove.cbegin();ist!=baseIntToRemove.end();ist++)
-           {
-              auto position = std::find(landmarksMap[msg.id].begin(), landmarksMap[msg.id].end(), *ist);
-              if (position != landmarksMap[msg.id].end())
+           if (baseIntToRemove.size() != landmarksMap[msg.id].size()){
+              for (auto ist = baseIntToRemove.cbegin();ist!=baseIntToRemove.end();ist++)
               {
-                 delete *position;
-                 landmarksMap[msg.id].erase(position);
+                 auto position = std::find(landmarksMap[msg.id].begin(), landmarksMap[msg.id].end(), *ist);
+                 if (position != landmarksMap[msg.id].end())
+                 {
+                    delete *position;
+                    landmarksMap[msg.id].erase(position);
+                 }
               }
            }
+           else{
+             IntervalVector newX(2,Interval::EMPTY_SET);
+             for (auto ist = landmarksMap[msg.id].cbegin();ist!=landmarksMap[msg.id].cend();ist++)
+             {
+                 newX |= *(*ist);
+                 delete *ist;
+             }
+             landmarksMap[msg.id].clear();
+             landmarksMap[msg.id].push_back(new IntervalVector(newX));
+           }
+           
+      //////////////////////////////////////////////////////////     
            for (i = 0;i<otherIntTmp.size();i++)
            {
                if (otherIntTmp[i].is_empty())
@@ -88,29 +88,40 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
                else
                   (*(landmarksMap[(*it).id][i])).put(0,otherIntTmp[i]);
            }
-           for (auto ist = otherIntToRemove.cbegin();ist!=otherIntToRemove.end();ist++)
-           {
-              auto position = std::find(landmarksMap[(*it).id].begin(), landmarksMap[(*it).id].end(), *ist);
-              if (position != landmarksMap[(*it).id].end())
+
+           if (otherIntToRemove.size() != landmarksMap[(*it).id].size()){
+              for (auto ist = otherIntToRemove.cbegin();ist!=otherIntToRemove.end();ist++)
               {
-                 delete *position;
-                 landmarksMap[(*it).id].erase(position);
-              }
+                 auto position = std::find(landmarksMap[(*it).id].begin(), landmarksMap[(*it).id].end(), *ist);
+                 if (position != landmarksMap[(*it).id].end())
+                 {
+                    delete *position;
+                    landmarksMap[(*it).id].erase(position);
+                 }
            }
+           }
+           else{
+             IntervalVector newX(2,Interval::EMPTY_SET);
+             for (auto ist = landmarksMap[(*it).id].cbegin();ist!=landmarksMap[(*it).id].cend();ist++)
+             {
+                 newX |= *(*ist);
+                 delete *ist;
+             }
+             landmarksMap[(*it).id].clear();
+             landmarksMap[(*it).id].push_back(new IntervalVector(newX));
+           }
+
+/////////////////////////////////////////////////////
         }
      }
   }
 }
 
-void IaSlam::internRobot(const std_msgs::Float64MultiArray msg)
-{
-  data_robot_.clear();
-  for (auto it = msg.data.cbegin();it!=msg.data.cend();it++)
-     data_robot_.push_back(*it);
-}
-
 void IaSlam::ia_iter(){
-     updateState();
+     ros::Time nowT  = ros::Time::now();
+     
+     updateState((nowT-lastIter).toSec(),true);
+     lastIter = nowT;
      std::vector<std::pair<Interval*,int> > beacs;
      for (auto it = map.begin(); it != map.end(); ++it){
        beacs.push_back(std::make_pair(new Interval((*it).second.first),(*it).first));
@@ -126,51 +137,20 @@ void IaSlam::ia_iter(){
      publishInterval();
 }
 
-void IaSlam::publishInterval(){
-   ia_msgs::Interval position_msg;
-   ia_msgs::Interval beacons_msg;
-   position_msg.header.stamp =  ros::Time::now();
-   beacons_msg.header.stamp =  ros::Time::now();
-   position_msg.header.frame_id = map_frame_;
-   beacons_msg.header.frame_id = map_frame_;
-   for (auto it = landmarksMap.cbegin(); it != landmarksMap.cend(); ++it)
-       intervalToMsg(beacons_msg,(*it).second);
-   ia_msgs::Interv newPoint;
-   newPoint.position.x = (*state_vector)[0].lb();
-   newPoint.position.y = (*state_vector)[1].lb();
-   newPoint.position.z = 0;
-   newPoint.width = (*state_vector)[0].diam();
-   newPoint.height = (*state_vector)[1].diam();
-   position_msg.data.push_back(newPoint);
-   beacon_pub_.publish(beacons_msg);
-   position_pub_.publish(position_msg);
-}
-
-void IaSlam::intervalToMsg(ia_msgs::Interval &interv,const std::vector<IntervalVector*> &boxes){
-     for (auto box = boxes.cbegin();box!=boxes.cend();box++)
-     { 
-       ia_msgs::Interv newPoint;
-       newPoint.position.x = (*(*box))[0].lb();
-       newPoint.position.y = (*(*box))[1].lb();
-       newPoint.position.z = 0;
-       newPoint.width = (*(*box))[0].diam();
-       newPoint.height = (*(*box))[1].diam();
-       interv.data.push_back(newPoint);
-     }
-}
-
-void IaSlam::updateState(){
-     (*dstate_vector)[0] = (*state_vector)[3]*cos((*state_vector)[4])*cos((*state_vector)[2]);//x
-     (*dstate_vector)[1] = (*state_vector)[3]*cos((*state_vector)[4])*sin((*state_vector)[2]);//y
-     (*dstate_vector)[2] = (*state_vector)[3]*sin((*state_vector)[4])/3.0;//thetap
+void IaSlam::updateState(double dtt,bool b =true){
+     if (b)
+        pastDt.push_back(dtt);
      (*dstate_vector)[3] = (*u)[0]&(Interval(data_robot_[0]).inflate(0.1));//acc
      (*dstate_vector)[4] = (*u)[1]&(Interval(data_robot_[1]).inflate(0.1));//deltap
-     (*state_vector)[0] += (*dstate_vector)[0]*dt;
-     (*state_vector)[1] += (*dstate_vector)[1]*dt;
-     (*state_vector)[2] += (*dstate_vector)[2]*dt;
-     (*state_vector)[3] += (*dstate_vector)[3]*dt;
-     (*state_vector)[4] += (*dstate_vector)[4]*dt;
-     Interval heading = Interval(data_robot_[2]).inflate(0.1);
+
+      
+     (*state_vector)[3] += (*dstate_vector)[3]*dtt;
+     (*state_vector)[4] += (*dstate_vector)[4]*dtt;
+
+     (*dstate_vector)[2] = (*state_vector)[3]*sin((*state_vector)[4])/3.0;//thetap
+     (*state_vector)[2] += (*dstate_vector)[2]*dtt;
+
+     Interval heading = Interval(data_robot_[2]).inflate(0.01);
      (*state_vector)[2] &= heading;
      if ((*state_vector)[2].is_empty())
         (*state_vector)[2] = heading;
@@ -178,138 +158,154 @@ void IaSlam::updateState(){
      (*state_vector)[3] &= doppler;
      if ((*state_vector)[3].is_empty())
         (*state_vector)[3] = doppler;
+
+     (*dstate_vector)[0] = (*state_vector)[3]*cos((*state_vector)[4])*cos((*state_vector)[2]);//x
+     (*dstate_vector)[1] = (*state_vector)[3]*cos((*state_vector)[4])*sin((*state_vector)[2]);//y
+     
+     (*state_vector)[0] += (*dstate_vector)[0]*dtt;
+     (*state_vector)[1] += (*dstate_vector)[1]*dtt;
+
+
 }
 
 void IaSlam::contractPast(){
-  for(int k = 0;k<5;k++)
+  for(int k = 0;k<1;k++)
 {
-  for (auto it =past.end() ; it != past.begin(); --it) 
-  {
-    if (it!=past.end()  && it!=past.end()-1 && past.size()>2 && it-1 !=past.begin())
-    {
-      (*temp_contract_vector).put(0,*((*it).first));
-      (*temp_contract_vector).put(5,*((*(it+1)).first));
-      (*temp_contract_vector).put(10,*u);
-      updContract->contract(*temp_contract_vector);
-      *((*it).first) = (*temp_contract_vector).subvector(0,4);
-      *((*(it+1)).first) = (*temp_contract_vector).subvector(5,9);
-      for (auto beaconMeas = (*it).second.begin(); beaconMeas != (*it).second.end();++beaconMeas)
-      {
-         std::map<int,std::vector<IntervalVector*> >::iterator itL;
-         IntervalVector contract_vector(5);
-         itL = landmarksMap.find((*beaconMeas).second);
-         if (itL == landmarksMap.end())
-            landmarksMap[(*beaconMeas).second] = std::vector<IntervalVector*>(1,new IntervalVector(2,Interval(-50,50)));
-         std::vector<IntervalVector* > beacIntToRemove;
-         IntervalVector newX(2,Interval::EMPTY_SET);
-         if (landmarksMap[(*beaconMeas).second].size() == 1){
-            (contract_vector)[0] = (*((*it).first))[0];
-            (contract_vector)[1] = (*((*it).first))[1];
-            (contract_vector)[2] = (*landmarksMap[(*beaconMeas).second][0])[0];
-            (contract_vector)[3] = (*landmarksMap[(*beaconMeas).second][0])[1];
-            (contract_vector)[4] = *((*beaconMeas).first);
-            distSIVIA(landmarksMap[(*beaconMeas).second],contract_vector,5);
-            landmarksMap[(*beaconMeas).second].erase(landmarksMap[(*beaconMeas).second].begin());
-         }
-         for (auto beacInt = landmarksMap[(*beaconMeas).second].begin();beacInt!=landmarksMap[(*beaconMeas).second].end();beacInt++)
-         { 
-            if ((**beacInt).is_empty())
-               beacIntToRemove.push_back(*beacInt);
-            else
-            {
-               (contract_vector)[0] = (*((*it).first))[0];
-               (contract_vector)[1] = (*((*it).first))[1];
-               (contract_vector)[2] = (**beacInt)[0];
-               (contract_vector)[3] = (**beacInt)[1];
-               (contract_vector)[4] = *((*beaconMeas).first);
-               distContract->contract(contract_vector);
-               newX[0] |= (contract_vector)[0];
-               newX[1] |= (contract_vector)[1];
-               if ((**beacInt).max_diam()>0.5)
-               {
-                 (**beacInt)[0] = contract_vector[2];
-                 (**beacInt)[1] = contract_vector[3];
-               }
-               *((*beaconMeas).first) = contract_vector[4];
-               if ((**beacInt).is_empty())
-                  beacIntToRemove.push_back(*beacInt);
-             }//end if
-          }//end for
-          (*((*it).first)).put(0,newX);
-          for (auto ist = beacIntToRemove.cbegin();ist!=beacIntToRemove.end();++ist)
-          {
-              auto position = std::find(landmarksMap[(*beaconMeas).second].begin(), landmarksMap[(*beaconMeas).second].end(), *ist);
-              if (position != landmarksMap[(*beaconMeas).second].end())
-              {
-                 delete *position;
-                 landmarksMap[(*beaconMeas).second].erase(position);
-              }
-          }
-      }// end for 
-   }//end if
-  }//end for
- 
-
-  for (auto it =past.begin() ; it != past.end(); ++it) 
-  {
-    if (it+1!=past.end())
-    {
-      (*temp_contract_vector).put(0,*((*it).first));
-      (*temp_contract_vector).put(5,*((*(it+1)).first));
-      (*temp_contract_vector).put(10,*u);
-      updContract->contract(*temp_contract_vector);
-      *((*it).first) = (*temp_contract_vector).subvector(0,4);
-      *((*(it+1)).first) = (*temp_contract_vector).subvector(5,9);
-      for (auto beaconMeas = (*it).second.begin(); beaconMeas != (*it).second.end();++beaconMeas)
-      {
-         std::map<int,std::vector< IntervalVector*> >::iterator itL;
-         IntervalVector contract_vector(5);
-         itL = landmarksMap.find((*beaconMeas).second);
-         if (itL == landmarksMap.end())
-            landmarksMap[(*beaconMeas).second] = std::vector<IntervalVector*>(1,new IntervalVector(2,Interval(-50,50)));
-         std::vector<IntervalVector* > beacIntToRemove;
-         IntervalVector newX(2,Interval::EMPTY_SET);
-         for (auto beacInt = landmarksMap[(*beaconMeas).second].begin();beacInt!=landmarksMap[(*beaconMeas).second].end();beacInt++)
-         { 
-            if ((**beacInt).is_empty())
-               beacIntToRemove.push_back(*beacInt);
-            else
-            {
-               (contract_vector)[0] = (*((*it).first))[0];
-               (contract_vector)[1] = (*((*it).first))[1];
-               (contract_vector)[2] = (**beacInt)[0];
-               (contract_vector)[3] = (**beacInt)[1];
-               (contract_vector)[4] = *((*beaconMeas).first);
-               distContract->contract(contract_vector);
-               newX[0] |= (contract_vector)[0];
-               newX[1] |= (contract_vector)[1];
-               if ((**beacInt).max_diam()>0.5)
-               {
-                 (**beacInt)[0] = contract_vector[2];
-                 (**beacInt)[1] = contract_vector[3];
-               }
-               *((*beaconMeas).first) = contract_vector[4];
-             }//end if
-          }//end for
-          (*((*it).first)).put(0,newX);
-          for (auto ist = beacIntToRemove.cbegin();ist!=beacIntToRemove.end();ist++)
-          {
-              auto position = std::find(landmarksMap[(*beaconMeas).second].begin(), landmarksMap[(*beaconMeas).second].end(), *ist);
-              if (position != landmarksMap[(*beaconMeas).second].end())
-              {
-                 delete *position;
-                 landmarksMap[(*beaconMeas).second].erase(position);
-              }
-          }
-      }//end for  
-    }//end if
-  }//end for
+  presentToPast();
+  pastToPresent();
 }
   if (past.size()>1)
   {
     (*state_vector) = *(past[past.size()-2].first);
-    updateState();
+    //updateState(pastDt[pastDt.size()-2]);
+    updateState(pastDt[pastDt.size()-1],false);
   }
+}
+
+void IaSlam::presentToPast(){
+  int idx = past.size();
+  for (auto it =past.end() ; it != past.begin(); --it) //go through time in reverse
+  {
+    if (it!=past.end()  && it!=past.end()-1 && past.size()>2 && it-1 !=past.begin())
+    {
+      ///////// contract over state equation /////////
+      (*temp_contract_vector).put(0,*((*it).first));
+      (*temp_contract_vector).put(5,*((*(it+1)).first));
+      (*temp_contract_vector).put(10,*u);
+      (*temp_contract_vector)[12]=Interval(pastDt[idx]);
+      updContract->contract(*temp_contract_vector);
+      if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(5,6).is_empty()) {
+            *((*it).first) = (*temp_contract_vector).subvector(0,4);
+            *((*(it+1)).first) = (*temp_contract_vector).subvector(5,9);
+      }
+      //////////////////distance to landmarks /////////////////
+      for (auto beaconMeas = (*it).second.begin(); beaconMeas != (*it).second.end();++beaconMeas)
+      {
+         contractIterDist(beaconMeas,it);
+      }// end for 
+   }//end if
+  }//end for
+  idx--;
+}
+
+void IaSlam::pastToPresent(){
+  int idx = 0;
+  for (auto it =past.begin() ; it != past.end(); ++it) //go through time from init to present
+  {
+    if (it+1!=past.end())
+    {
+      ///////// contract over state equation /////////
+      (*temp_contract_vector).put(0,*((*it).first));
+      (*temp_contract_vector).put(5,*((*(it+1)).first));
+      (*temp_contract_vector).put(10,*u);
+      (*temp_contract_vector)[12]=Interval(pastDt[idx]);
+      updContract->contract(*temp_contract_vector);
+      if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(5,6).is_empty()) {
+            *((*it).first) = (*temp_contract_vector).subvector(0,4);
+            *((*(it+1)).first) = (*temp_contract_vector).subvector(5,9);
+      }
+      //////////////////distance to landmarks /////////////////
+      for (auto beaconMeas = (*it).second.begin(); beaconMeas != (*it).second.end();++beaconMeas)
+      {
+         contractIterDist(beaconMeas,it);
+      }//end for  
+    }//end if
+    idx++;
+  }//end for
+}
+
+
+void IaSlam::contractIterDist(it_beac::iterator &beaconMeas,past_vector::iterator &it){
+// contract with distances constraint for the time at iteration it
+   std::map<int,std::vector<IntervalVector*> >::iterator itL;
+   IntervalVector contract_vector(5);
+   itL = landmarksMap.find((*beaconMeas).second);
+   if (itL == landmarksMap.end())
+      landmarksMap[(*beaconMeas).second] = std::vector<IntervalVector*>(1,new IntervalVector(2,Interval(-50,50)));
+   std::vector<IntervalVector* > beacIntToRemove;
+   IntervalVector newX(2,Interval::EMPTY_SET);
+   if (landmarksMap[(*beaconMeas).second].size() == 1)
+   {
+       (contract_vector)[0] = (*((*it).first))[0];
+       (contract_vector)[1] = (*((*it).first))[1];
+       (contract_vector)[2] = (*landmarksMap[(*beaconMeas).second][0])[0];
+       (contract_vector)[3] = (*landmarksMap[(*beaconMeas).second][0])[1];
+       (contract_vector)[4] = *((*beaconMeas).first);
+       distSIVIA(landmarksMap[(*beaconMeas).second],contract_vector,(*landmarksMap[(*beaconMeas).second][0]).max_diam()/division_box_);
+       landmarksMap[(*beaconMeas).second].erase(landmarksMap[(*beaconMeas).second].begin());
+   }
+   if (landmarksMap[(*beaconMeas).second].size()==0){
+      dump();
+   }
+   for (auto beacInt = landmarksMap[(*beaconMeas).second].begin();beacInt!=landmarksMap[(*beaconMeas).second].end();beacInt++)
+   { 
+       if ((**beacInt).is_empty())
+         beacIntToRemove.push_back(*beacInt);
+       else
+       {
+          (contract_vector)[0] = (*((*it).first))[0];
+          (contract_vector)[1] = (*((*it).first))[1];
+          (contract_vector)[2] = (**beacInt)[0];
+          (contract_vector)[3] = (**beacInt)[1];
+          (contract_vector)[4] = *((*beaconMeas).first);
+          distContract->contract(contract_vector);
+          newX[0] |= (contract_vector)[0];
+          newX[1] |= (contract_vector)[1];
+          if ((**beacInt).max_diam()>0.5)
+          {
+            (**beacInt)[0] = contract_vector[2];
+            (**beacInt)[1] = contract_vector[3];
+          }
+          *((*beaconMeas).first) = contract_vector[4];
+          if ((**beacInt).is_empty())
+             beacIntToRemove.push_back(*beacInt);
+          }//end if
+    }//end for
+    if (!(contract_vector).subvector(0,1).is_empty() ) {// if we have over contracted we restore the last box
+      (*((*it).first)).put(0,newX);
+    }
+    if (beacIntToRemove.size() != landmarksMap[(*beaconMeas).second].size()){
+       for (auto ist = beacIntToRemove.cbegin();ist!=beacIntToRemove.end();++ist)
+       {
+          auto position = std::find(landmarksMap[(*beaconMeas).second].begin(), landmarksMap[(*beaconMeas).second].end(), *ist);
+          if (position != landmarksMap[(*beaconMeas).second].end())
+          {
+               delete *position;
+               landmarksMap[(*beaconMeas).second].erase(position);
+          }
+       }
+    }
+    else{
+        newX[0] = Interval::EMPTY_SET;
+        newX[1] = Interval::EMPTY_SET;
+        for (auto ist = landmarksMap[(*beaconMeas).second].cbegin();ist!=landmarksMap[(*beaconMeas).second].cend();ist++)
+        {
+            newX |= *(*ist);
+            delete *ist;
+        }
+        landmarksMap[(*beaconMeas).second].clear();
+        landmarksMap[(*beaconMeas).second].push_back(new IntervalVector(newX));
+    }
 }
 
 }//end namespace

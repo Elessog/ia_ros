@@ -17,7 +17,7 @@ def f(x,u):
     return xdot
 
 def onecar():  
-    x = np.array([5,-5,np.pi/3,2,0.5]);
+    x = np.array([5,-5,np.pi/3,0.5,0.5]);
     dt = 1/30.0;
     u = [0,0];
     br = tf.TransformBroadcaster()
