@@ -92,7 +92,9 @@ void IaSlam::dump(){
   std::string filepath = "/home/elessog/data/dump.txt";
   fichier.open(filepath.c_str(), ios::out | ios::trunc);
   for (int i=0 ; i<past.size();i++){
-    fichier << i << ": " << pastDt[i] << ';' <<  (*(past[i].first)).subvector(0,1) << std::endl;
+    fichier << i << " " << pastDt[i] << ' ' <<  (*(past[i].first))[0].lb() << ' ' 
+            << (*(past[i].first))[0].ub() << ' ' <<  (*(past[i].first))[1].lb()
+            << ' ' <<  (*(past[i].first))[1].ub()<< std::endl;
   }
   fichier.flush();  
   fichier.close();

@@ -6,12 +6,12 @@
   <param name="robot_frame"  value="robot"/>
   <param name="beacon_topic"  value="beacon_echo"/>
   <param name="internal_topic"  value="robot_data"/>
-  <param name="sensorPrecision"  value="0.2"/>
+  <param name="sensorPrecision"  value="0.1"/>
   <param name="ros_rate"  value="30"/>
   <param name="nb_outliers"  value="3"/>
   <param name="max_box"  value="10"/>
-  <param name="gps_precision"  value="1"/>
-  <param name="division_box_rate" value="0.5"/>
+  <param name="gps_precision"  value="0.1"/>
+  <param name="division_box_rate" value="7"/>
 </node>
 
 </launch>

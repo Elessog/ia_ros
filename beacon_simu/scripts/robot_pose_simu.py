@@ -40,6 +40,7 @@ def onecar():
        #euler = tf.transformations.euler_from_quaternion(quat)
        msgIntern.data.append(x[2]);
        msgIntern.data.append(x[3]);
+       msgIntern.data.append(x[4]);
        pub.publish(msg)
        pub_intern.publish(msgIntern)
        time.sleep(dt)
