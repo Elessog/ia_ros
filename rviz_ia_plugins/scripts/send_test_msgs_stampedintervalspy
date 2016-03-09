@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+#import roslib; roslib.load_manifest( 'rviz_plugin_tutorials' )
+from ia_msgs.msg import StampedInterval,IdInterval,Interv
+import rospy
+from math import cos, sin
+import tf
+
+topic = 'test_interval'
+publisher = rospy.Publisher( topic, StampedInterval, queue_size = 1 )
+
+rospy.init_node( 'test_interval' )
+
+rate = rospy.Rate(10)
+
+
+interval = StampedInterval()
+first = IdInterval()
+first.id = 0;
+sec = IdInterval()
+sec.id = 1;
+interval.header.frame_id = "/map"
+interval.header.stamp = rospy.Time.now()
+interv = Interv()
+interv.position.x=0
+interv.position.y=0
+interv.position.z=0
+interv.width = 1
+interv.height = 2
+
+first.data.append(interv)
+interval.data.append(first)
+interv = Interv()
+interv.position.x=2
+interv.position.y=2
+interv.position.z=0
+interv.width = 2
+interv.height = 1
+sec.data.append(interv)
+interval.data.append(sec)
+
+
+while not rospy.is_shutdown():
+
+    
+    publisher.publish( interval )
+
+    interval.data[0].data[0].width += 0.01 
+    interval.data[1].data[0].position.x += 0.01
+    rate.sleep()
+

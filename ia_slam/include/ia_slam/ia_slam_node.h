@@ -15,6 +15,7 @@
 #include <ibex_CtcQInter.h>
 #include <ibex_CtcPixelMap.h>
 
+#include "ia_msgs/StampedInterval.h"
 #include "ia_msgs/Interval.h"
 #include "ia_msgs/BeaconDist.h"
 #include "ia_msgs/Start_Slam.h"
@@ -51,9 +52,11 @@ class IaSlam
    std::string base_frame_;
    std::string beacon_topic_;
    std::string internal_topic_;
-   
+   std::string external_interv_topic_;
+
    ros::Subscriber beacon_sub_;
    ros::Subscriber internal_sub_;
+   ros::Subscriber external_interv_sub_;
 
    ros::ServiceServer service_;
    ros::Publisher beacon_pub_;
@@ -62,6 +65,9 @@ class IaSlam
    double sensorPrecision_;
    double gps_precision_;
    double division_box_;
+   double heading_precision_;
+   double speed_precision_;
+   double headingWheel_precision_;
   
    bool starterControl(ia_msgs::Start_Slam::Request &req,ia_msgs::Start_Slam::Response &res);
 
@@ -70,9 +76,11 @@ class IaSlam
    std::map<int,std::vector< IntervalVector*> > landmarksMap;
    void beaconDist(const ia_msgs::BeaconDist msg);
    void internRobot(const std_msgs::Float64MultiArray msg);
+   void betweenRobot(const ia_msgs::StampedInterval msg);
    void ia_iter();
    void publishInterval();
-   void intervalToMsg(ia_msgs::Interval &interv,const std::vector<IntervalVector*> &boxes);
+   void intervalToMsg(ia_msgs::StampedInterval &interv,int i, const std::vector<IntervalVector*> &boxes);
+   void msgToBoxes(std::vector< IntervalVector*> &newBoxes,const std::vector<ia_msgs::Interv> data);
    void updateState(double dtt,bool b);
    void contractPast();
    void presentToPast();

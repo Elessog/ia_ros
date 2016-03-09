@@ -15,4 +15,12 @@
     </description>
     <message_type>ia_msgs/Interval3D</message_type>
   </class>
+  <class name="rviz_ia_plugins/StampedInterval"
+         type="rviz_ia_plugins::StampedIntervalDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays differenciable interval boxes.
+    </description>
+    <message_type>ia_msgs/StampedInterval</message_type>
+  </class>
 </library>

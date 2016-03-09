@@ -20,6 +20,7 @@ add_definitions(-DQT_NO_KEYWORDS)
 qt4_wrap_cpp(MOC_FILES
   src/interval_display.h
   src/interval3D_display.h
+  src/stampedinterval_display.h
 )
 
 ## Here we specify the list of source files, including the output of
@@ -29,6 +30,8 @@ set(SOURCE_FILES
   src/interval_visual.cpp
   src/interval3D_display.cpp
   src/interval3D_visual.cpp
+  src/stampedinterval_display.cpp
+  src/stampedinterval_visual.cpp
   ${MOC_FILES}
 )
 

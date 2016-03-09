@@ -142,7 +142,7 @@ include_directories(
 # add_dependencies(ia_slam ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(ia_slam_node src/ia_slam_node.cpp src/ia_slam.cpp src/ia_sivia.cpp)
+add_executable(ia_slam_node src/ia_slam_node.cpp src/ia_slam.cpp src/ia_sivia.cpp src/ia_msg_handler.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

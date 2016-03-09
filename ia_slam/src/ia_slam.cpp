@@ -4,119 +4,6 @@ using namespace ibex;
 namespace ia_slam 
 {
 
-
-
-void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
-{
-  start = true;
-  map[msg.id] = std::make_pair(Interval(msg.distance).inflate(sensorPrecision_),true);
-  std::map<int,std::vector< IntervalVector*> >::iterator itL;
-  IntervalVector contract_vector(5);
-  itL = landmarksMap.find(msg.id);
-  if (itL != landmarksMap.end())
-  {
-     for (auto it=msg.distBeacons.cbegin();it!=msg.distBeacons.cend();it++)
-     {
-        std::map<int,std::vector< IntervalVector*> >::iterator itLL;
-        itLL = landmarksMap.find((*it).id);
-        if (itLL != landmarksMap.end())
-        {
-           std::vector<IntervalVector> baseIntTmp = std::vector<IntervalVector>((landmarksMap[msg.id]).size(),IntervalVector(2,Interval::EMPTY_SET));
-           std::vector<IntervalVector> otherIntTmp = std::vector<IntervalVector>((landmarksMap[(*it).id]).size(),IntervalVector(2,Interval::EMPTY_SET));
-           int i,j;
-           i=0;
-           for (auto baseInt = landmarksMap[msg.id].begin();baseInt!=landmarksMap[msg.id].end();baseInt++)
-           {
-               j=0;
-               for (auto otherInt = landmarksMap[(*it).id].begin();otherInt!=landmarksMap[(*it).id].end();otherInt++)
-               {
-                  (contract_vector)[0] = (**baseInt)[0];
-                  (contract_vector)[1] = (**baseInt)[1];
-                  (contract_vector)[2] = (**otherInt)[0];
-                  (contract_vector)[3] = (**otherInt)[1];
-                  (contract_vector)[4] = Interval((*it).dist).inflate(0.2);
-                  distContract->contract(contract_vector);
-                  baseIntTmp[i][0] |= contract_vector[0];
-                  baseIntTmp[i][1] |= contract_vector[1];
-                  otherIntTmp[j][0] |= contract_vector[2];
-                  otherIntTmp[j][1] |= contract_vector[3];
-                  j++;
-               }
-               i++;
-           }
-////////////////////////:managing empty set ////////////////////////
-           std::vector<IntervalVector*> baseIntToRemove;
-           std::vector<IntervalVector*> otherIntToRemove;
-           for (i = 0;i<baseIntTmp.size();i++)
-           {
-               if (baseIntTmp[i].is_empty())
-               {
-                  baseIntToRemove.push_back(landmarksMap[msg.id][i]);
-               }
-               else
-                  (*(landmarksMap[msg.id][i])).put(0,baseIntTmp[i]);
-           }
-           if (baseIntToRemove.size() != landmarksMap[msg.id].size()){
-              for (auto ist = baseIntToRemove.cbegin();ist!=baseIntToRemove.end();ist++)
-              {
-                 auto position = std::find(landmarksMap[msg.id].begin(), landmarksMap[msg.id].end(), *ist);
-                 if (position != landmarksMap[msg.id].end())
-                 {
-                    delete *position;
-                    landmarksMap[msg.id].erase(position);
-                 }
-              }
-           }
-           else{
-             IntervalVector newX(2,Interval::EMPTY_SET);
-             for (auto ist = landmarksMap[msg.id].cbegin();ist!=landmarksMap[msg.id].cend();ist++)
-             {
-                 newX |= *(*ist);
-                 delete *ist;
-             }
-             landmarksMap[msg.id].clear();
-             landmarksMap[msg.id].push_back(new IntervalVector(newX));
-           }
-           
-      //////////////////////////////////////////////////////////     
-           for (i = 0;i<otherIntTmp.size();i++)
-           {
-               if (otherIntTmp[i].is_empty())
-               {
-                  otherIntToRemove.push_back(landmarksMap[(*it).id][i]);
-               }
-               else
-                  (*(landmarksMap[(*it).id][i])).put(0,otherIntTmp[i]);
-           }
-
-           if (otherIntToRemove.size() != landmarksMap[(*it).id].size()){
-              for (auto ist = otherIntToRemove.cbegin();ist!=otherIntToRemove.end();ist++)
-              {
-                 auto position = std::find(landmarksMap[(*it).id].begin(), landmarksMap[(*it).id].end(), *ist);
-                 if (position != landmarksMap[(*it).id].end())
-                 {
-                    delete *position;
-                    landmarksMap[(*it).id].erase(position);
-                 }
-           }
-           }
-           else{
-             IntervalVector newX(2,Interval::EMPTY_SET);
-             for (auto ist = landmarksMap[(*it).id].cbegin();ist!=landmarksMap[(*it).id].cend();ist++)
-             {
-                 newX |= *(*ist);
-                 delete *ist;
-             }
-             landmarksMap[(*it).id].clear();
-             landmarksMap[(*it).id].push_back(new IntervalVector(newX));
-           }
-
-/////////////////////////////////////////////////////
-        }
-     }
-  }
-}
-
 void IaSlam::ia_iter(){
      ros::Time nowT  = ros::Time::now();
      
@@ -137,7 +24,7 @@ void IaSlam::ia_iter(){
      publishInterval();
 }
 
-void IaSlam::updateState(double dtt,bool b =true){
+void IaSlam::updateState(double dtt,bool b = true){
      if (b)
         pastDt.push_back(dtt);
      (*dstate_vector)[3] = (*u)[0]&(Interval(data_robot_[0]).inflate(0.1));//acc
@@ -147,7 +34,7 @@ void IaSlam::updateState(double dtt,bool b =true){
      (*state_vector)[3] += (*dstate_vector)[3]*dtt;
      
      (*state_vector)[4] += (*dstate_vector)[4]*dtt;
-     Interval headingWheel = Interval(data_robot_[4]).inflate(0.01);
+     Interval headingWheel = Interval(data_robot_[4]).inflate(headingWheel_precision_);
      (*state_vector)[4] &= headingWheel;
      if ((*state_vector)[4].is_empty())
         (*state_vector)[4] = headingWheel;
@@ -155,11 +42,11 @@ void IaSlam::updateState(double dtt,bool b =true){
      (*dstate_vector)[2] = (*state_vector)[3]*sin((*state_vector)[4])/3.0;//thetap
      (*state_vector)[2] += (*dstate_vector)[2]*dtt;
 
-     Interval heading = Interval(data_robot_[2]).inflate(0.01);
+     Interval heading = Interval(data_robot_[2]).inflate(heading_precision_);
      (*state_vector)[2] &= heading;
      if ((*state_vector)[2].is_empty())
         (*state_vector)[2] = heading;
-     Interval doppler = Interval(data_robot_[3]).inflate(0.05);
+     Interval doppler = Interval(data_robot_[3]).inflate(speed_precision_);
      (*state_vector)[3] &= doppler;
      if ((*state_vector)[3].is_empty())
         (*state_vector)[3] = doppler;
@@ -175,18 +62,21 @@ void IaSlam::updateState(double dtt,bool b =true){
 }
 
 void IaSlam::contractPast(){
-  for(int k = 0;k<1;k++)
-{
-  if (past.size()>500)
-      past.erase(past.begin());
-  presentToPast();
-  pastToPresent();
-}
+  for (int k = 0;k<1;k++)
+  {
+     if (past.size()>250){
+        for (auto it=(*(past.begin())).second.begin();it!=(*(past.begin())).second.end();++it)     
+            delete (*it).first;
+        delete (*(past.begin())).first;
+        past.erase(past.begin());
+        pastDt.erase(pastDt.begin());
+     }
+     presentToPast();
+     pastToPresent();
+  }
   if (past.size()>1)
   {
     (*state_vector) = *(past[past.size()-1].first);
-    //updateState(pastDt[pastDt.size()-2]);
-    //updateState(pastDt[pastDt.size()-1],false);
   }
 }
 
@@ -269,8 +159,11 @@ void IaSlam::contractIterDist(it_beac::iterator &beaconMeas,past_vector::iterato
        (contract_vector)[2] = (*landmarksMap[(*beaconMeas).second][k])[0];
        (contract_vector)[3] = (*landmarksMap[(*beaconMeas).second][k])[1];
        (contract_vector)[4] = *((*beaconMeas).first);
-       distSIVIA(landmarksMap[(*beaconMeas).second],contract_vector,(*landmarksMap[(*beaconMeas).second][k]).max_diam()/division_box_);
-       landmarksMap[(*beaconMeas).second].erase(landmarksMap[(*beaconMeas).second].begin()+k);
+       if ((*landmarksMap[(*beaconMeas).second][k]).max_diam() > 0.5) //if the biggest box is big enough we pave it
+       {
+          distSIVIA(landmarksMap[(*beaconMeas).second],contract_vector,(*landmarksMap[(*beaconMeas).second][k]).max_diam()/division_box_);
+          landmarksMap[(*beaconMeas).second].erase(landmarksMap[(*beaconMeas).second].begin()+k);
+       }
    }
    if (landmarksMap[(*beaconMeas).second].size()==0){
       dump();

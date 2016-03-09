@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+
+<node pkg="ia_slam" type="ia_slam_node" name="ia_slam1" output="screen">
+  <param name="map_frame"  value="map"/>
+  <param name="robot_frame"  value="robot1"/>
+  <param name="beacon_topic"  value="beacon_echo1"/>
+  <param name="internal_topic"  value="robot_data1"/>
+  <param name="extern_robot_topic" value="extern_robot1"/>
+  <param name="sensorPrecision"  value="0.1"/>
+  <param name="ros_rate"  value="30"/>
+  <param name="nb_outliers"  value="3"/>
+  <param name="max_box"  value="10"/>
+  <param name="gps_precision"  value="0.1"/>
+  <param name="division_box_rate" value="3"/>
+</node>
+
+<node pkg="ia_slam" type="ia_slam_node" name="ia_slam2" output="screen">
+  <param name="map_frame"  value="map"/>
+  <param name="robot_frame"  value="robot2"/>
+  <param name="beacon_topic"  value="beacon_echo2"/>
+  <param name="internal_topic"  value="robot_data2"/>
+  <param name="extern_robot_topic" value="extern_robot2"/>
+  <param name="sensorPrecision"  value="0.1"/>
+  <param name="ros_rate"  value="30"/>
+  <param name="nb_outliers"  value="3"/>
+  <param name="max_box"  value="10"/>
+  <param name="gps_precision"  value="0.1"/>
+  <param name="division_box_rate" value="3"/>
+</node>
+
+</launch>

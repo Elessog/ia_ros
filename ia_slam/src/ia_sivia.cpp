@@ -6,6 +6,8 @@ void IaSlam::distSIVIA(std::vector<IntervalVector*> &in,IntervalVector X,double 
    std::stack<IntervalVector> s;
    s.push(X);
    IntervalVector tempVector(2);
+   int j=in.size();
+   int k = 0;
    while (!s.empty()) 
    {
        IntervalVector box=s.top();
@@ -22,12 +24,24 @@ void IaSlam::distSIVIA(std::vector<IntervalVector*> &in,IntervalVector X,double 
            std::pair<IntervalVector,IntervalVector> p=box.bisect(i);
            s.push(p.first);
            s.push(p.second);
+           k++;
        }
-       else
+       else if (k < division_box_*division_box_) 
        {
            in.push_back(new IntervalVector(tempVector));
        }
+       else
+       {
+         while (!s.empty())
+        {
+            in.push_back(new IntervalVector(s.top()));
+            s.pop();
+         }
+       }    
    }
+
+ROS_INFO("Sivia contraction %d",(int) in.size()-j);
+
 }
 
 } //end namespace

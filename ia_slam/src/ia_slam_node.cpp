@@ -29,30 +29,41 @@ IaSlam::IaSlam():start(false)
         gps_precision_ = 1;
     if (!nh_private_.getParam ("division_box_rate", division_box_))
         division_box_ = 0.5;
+    if (!nh_private_.getParam ("extern_robot_topic", external_interv_topic_))
+        external_interv_topic_ = "extern_robot";
+    if (!nh_private_.getParam ("heading_precision", heading_precision_))
+        heading_precision_ = 0.01;
+    if (!nh_private_.getParam ("speed_precision", speed_precision_))
+        speed_precision_ = 0.05;
+    if (!nh_private_.getParam ("headingWheel_precision", headingWheel_precision_))
+        headingWheel_precision_ = 0.01;
     
     service_ = nh_private_.advertiseService("starter", &IaSlam::starterControl,this);
     beacon_sub_ = nh_.subscribe(beacon_topic_,1, &IaSlam::beaconDist,this);
     internal_sub_ = nh_.subscribe(internal_topic_,1, &IaSlam::internRobot,this);
+    external_interv_sub_ = nh_.subscribe(external_interv_topic_,1, &IaSlam::betweenRobot,this);
 
-
-    beacon_pub_ = nh_private_.advertise<ia_msgs::Interval>("beacons", 10);
+    beacon_pub_ = nh_private_.advertise<ia_msgs::StampedInterval>("beacons", 2);
     position_pub_ = nh_private_.advertise<ia_msgs::Interval>("pose", 10);
     state_vector = new IntervalVector(5,Interval(0,0));
     dstate_vector = new IntervalVector(5,Interval(-50,50));
     temp_contract_vector = new IntervalVector(13,Interval(-50,50));
     u = new IntervalVector(2,Interval(-1,1));
-    x = new Variable();
+
+///////////////////////////////// Constraints ////////////////////////////////////////////////////
+    x = new Variable();  //robot interval pose
     y = new Variable();
-    ax = new Variable();
+    ax = new Variable(); //beacon interval
     ay = new Variable();
-    d = new Variable();
-    uX = new Variable(5);
-    ud = new Variable(2);
-    X = new Variable(5);
-    idt = new Variable();
+    d = new Variable();//distance to beacons
+    uX = new Variable(5);//state vector at time t+1
+    ud = new Variable(2);//input on actuators
+    X = new Variable(5);//state vector at time t
+    idt = new Variable();//interval for dt 
     dt = 1/float(ros_rate);
-    distfunc= new Function(*x,*y,*ax,*ay,*d,sqr(*x-*ax)+sqr(*y-*ay)-sqr(*d));
-    updfunc= new Function(*X,*uX,*ud,*idt,Return(
+
+    distfunc= new Function(*x,*y,*ax,*ay,*d,sqr(*x-*ax)+sqr(*y-*ay)-sqr(*d)); // distance to beacon constraint
+    updfunc= new Function(*X,*uX,*ud,*idt,Return(                             // state equation constraints
                                  (*X)[0] + (*X)[3]*cos((*X)[4])*cos((*X)[2])*(*idt) - (*uX)[0],
                                  (*X)[1] + (*X)[3]*cos((*X)[4])*sin((*X)[2])*(*idt) - (*uX)[1],
                                  (*X)[2] + (*X)[3]*sin((*X)[4])*(*idt)/3.0 - (*uX)[2],
@@ -63,11 +74,11 @@ IaSlam::IaSlam():start(false)
     distContract =new CtcFixPoint(*c,1e-01);
     s =new CtcFwdBwd(*updfunc);
     updContract =new CtcFixPoint(*s,1e-01);
-    
+/////////////////////////////////////////////////////////////////////////////////////////////////
     tf::TransformListener listener;
     tf::StampedTransform transform;
     double roll, pitch, yaw;
-    try{
+    try{// get fisrt position (simulating start of mission with first position known)
       listener.waitForTransform(map_frame_, base_frame_,
                               ros::Time::now(), ros::Duration(3.0));
       listener.lookupTransform(map_frame_, base_frame_, ros::Time(0), transform);
@@ -89,7 +100,7 @@ IaSlam::~IaSlam(){}
 
 void IaSlam::dump(){
   ofstream fichier;
-  std::string filepath = "/home/elessog/data/dump.txt";
+  std::string filepath = "~/data/dump.txt";
   fichier.open(filepath.c_str(), ios::out | ios::trunc);
   for (int i=0 ; i<past.size();i++){
     fichier << i << " " << pastDt[i] << ' ' <<  (*(past[i].first))[0].lb() << ' ' 
@@ -102,15 +113,15 @@ void IaSlam::dump(){
   exit(0);
 }
 
-void IaSlam::publishInterval(){
+void IaSlam::publishInterval(){// send interval boxes to rviz and others
    ia_msgs::Interval position_msg;
-   ia_msgs::Interval beacons_msg;
+   ia_msgs::StampedInterval beacons_msg;
    position_msg.header.stamp =  ros::Time::now();
    beacons_msg.header.stamp =  ros::Time::now();
    position_msg.header.frame_id = map_frame_;
    beacons_msg.header.frame_id = map_frame_;
    for (auto it = landmarksMap.cbegin(); it != landmarksMap.cend(); ++it)
-       intervalToMsg(beacons_msg,(*it).second);
+       intervalToMsg(beacons_msg,(*it).first, (*it).second);
    ia_msgs::Interv newPoint;
    newPoint.position.x = (*state_vector)[0].lb();
    newPoint.position.y = (*state_vector)[1].lb();
@@ -122,7 +133,9 @@ void IaSlam::publishInterval(){
    position_pub_.publish(position_msg);
 }
 
-void IaSlam::intervalToMsg(ia_msgs::Interval &interv,const std::vector<IntervalVector*> &boxes){
+void IaSlam::intervalToMsg(ia_msgs::StampedInterval &interv,int i ,const std::vector<IntervalVector*> &boxes){
+     ia_msgs::IdInterval newList;
+     newList.id = i;
      for (auto box = boxes.cbegin();box!=boxes.cend();box++)
      { 
        ia_msgs::Interv newPoint;
@@ -131,8 +144,9 @@ void IaSlam::intervalToMsg(ia_msgs::Interval &interv,const std::vector<IntervalV
        newPoint.position.z = 0;
        newPoint.width = (*(*box))[0].diam();
        newPoint.height = (*(*box))[1].diam();
-       interv.data.push_back(newPoint);
+       newList.data.push_back(newPoint);
      }
+     interv.data.push_back(newList);
 }
 
 void IaSlam::internRobot(const std_msgs::Float64MultiArray msg)
