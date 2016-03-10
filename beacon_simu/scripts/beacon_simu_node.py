@@ -22,7 +22,7 @@ def talker():
         if start:
           for beacon,i in zip(beacons,range(len(beacons))): 
             dist  = m.sqrt((beacon[0]-position.x)**2+(beacon[1]-position.y)**2);
-            if dist < 10:
+            if dist < 15:
               pub.publish(stamp,i,dist,distBeacons[i])
             rate.sleep()
           poses.header = stamp
@@ -51,7 +51,8 @@ if __name__ == '__main__':
 
     rospy.Subscriber(pose_topic, PoseStamped, callback)
     pub = rospy.Publisher(beacon_topic, BeaconDist, queue_size=10)
-    pubReal = rospy.Publisher('beacon_poses',PointCloud, queue_size=10)
+    if publish_beacons:
+       pubReal = rospy.Publisher('beacon_poses',PointCloud, queue_size=10)
     poses = PointCloud();
     distBeacons = []
     for beacon in beacons:
@@ -59,7 +60,7 @@ if __name__ == '__main__':
        distBeacon = []
        for beac,i in zip(beacons,range(len(beacons))):
            dist = m.sqrt((beacon[0]-beac[0])**2+(beacon[1]-beac[1])**2)
-           if dist <= 10 and not dist == 0:
+           if dist <= 20 and not dist == 0:
               distBeacon.append(DistInterBeacon(i,dist))
        distBeacons.append(distBeacon)
     talker()

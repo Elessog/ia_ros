@@ -19,7 +19,14 @@ void IaSlam::ia_iter(){
      map.clear();
      if (beacs.size()>0){
         contractPast();
-        //ROS_INFO("Number of beacons %d",(int) beacs.size());
+        //ROS_INFO("Number of past %d",(int) past.size());
+     }
+     if (past.size()>1000){
+        for (auto it=(*(past.begin())).second.begin();it!=(*(past.begin())).second.end();++it)     
+            delete (*it).first;
+        delete (*(past.begin())).first;
+        past.erase(past.begin());
+        pastDt.erase(pastDt.begin());
      }
      publishInterval();
 }
@@ -64,13 +71,6 @@ void IaSlam::updateState(double dtt,bool b = true){
 void IaSlam::contractPast(){
   for (int k = 0;k<1;k++)
   {
-     if (past.size()>250){
-        for (auto it=(*(past.begin())).second.begin();it!=(*(past.begin())).second.end();++it)     
-            delete (*it).first;
-        delete (*(past.begin())).first;
-        past.erase(past.begin());
-        pastDt.erase(pastDt.begin());
-     }
      presentToPast();
      pastToPresent();
   }
@@ -91,7 +91,7 @@ void IaSlam::presentToPast(){
          (*temp_contract_vector).put(0,*((*it).first));
          (*temp_contract_vector).put(5,*((*(it+1)).first));
          (*temp_contract_vector).put(10,*u);
-         (*temp_contract_vector)[12]=Interval(pastDt[idx+1]).inflate(0.02);
+         (*temp_contract_vector)[12]=Interval(pastDt[idx+1]).inflate(0.05);
          updContract->contract(*temp_contract_vector);
          if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(5,6).is_empty()) {
                *((*it).first) = (*temp_contract_vector).subvector(0,4);

@@ -26,18 +26,18 @@ void IaSlam::distSIVIA(std::vector<IntervalVector*> &in,IntervalVector X,double 
            s.push(p.second);
            k++;
        }
-       else if (k < division_box_*division_box_) 
+       else //if (k < division_box_*division_box_) 
        {
            in.push_back(new IntervalVector(tempVector));
        }
-       else
+       /*else
        {
          while (!s.empty())
         {
             in.push_back(new IntervalVector(s.top()));
             s.pop();
          }
-       }    
+       }  */  
    }
 
 ROS_INFO("Sivia contraction %d",(int) in.size()-j);

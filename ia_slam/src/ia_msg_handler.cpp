@@ -6,6 +6,7 @@ namespace ia_slam
 
 void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
 {
+  //ROS_INFO("delay : %f",(msg.header.stamp-ros::Time::now()).toSec());
   start = true;
   map[msg.id] = std::make_pair(Interval(msg.distance).inflate(sensorPrecision_),true);
   std::map<int,std::vector< IntervalVector*> >::iterator itL;

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<launch>
+
+<node pkg="beacon_simu" type="beacon_simu_node.py" name="beacon_simu1">
+  <param name="beacon_topic"  value="beacon_echo1"/>
+  <param name="pose_topic"  value="robot_pose1"/>
+</node>
+
+<node pkg="beacon_simu" type="robot_pose_simu.py" name="robot_simu1" output="screen">
+  <param name="data_topic"  value="robot_data1"/>
+  <param name="pose_topic"  value="robot_pose1"/>
+  <param name="typeMove"  value="1"/>
+  <param name="map_frame"  value="map"/>
+  <param name="base_frame"  value="robot1"/>
+</node>
+
+
+<node pkg="beacon_simu" type="beacon_simu_node.py" name="beacon_simu2">
+  <param name="beacon_topic"  value="beacon_echo2"/>
+  <param name="pose_topic"  value="robot_pose2"/>
+  <param name="publish_beacons"  value="0"/>
+</node>
+
+<node pkg="beacon_simu" type="robot_pose_simu.py" name="robot_simu2" output="screen">
+  <param name="data_topic"  value="robot_data2"/>
+  <param name="pose_topic"  value="robot_pose2"/>
+  <param name="typeMove"  value="0"/>
+  <param name="map_frame"  value="map"/>
+  <param name="base_frame"  value="robot2"/>
+</node>
+
+<node pkg="beacon_simu" type="beacon_simu_node.py" name="beacon_simu3">
+  <param name="beacon_topic"  value="beacon_echo3"/>
+  <param name="pose_topic"  value="robot_pose3"/>
+  <param name="publish_beacons"  value="0"/>
+</node>
+
+<node pkg="beacon_simu" type="robot_pose_simu.py" name="robot_simu3" output="screen">
+  <param name="data_topic"  value="robot_data3"/>
+  <param name="pose_topic"  value="robot_pose3"/>
+  <param name="typeMove"  value="2"/>
+  <param name="map_frame"  value="map"/>
+  <param name="base_frame"  value="robot3"/>
+</node>
+
+
+</launch>

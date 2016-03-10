@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
 
-<node pkg="ia_slam" type="ia_slam_node" name="ia_slam" output="screen">
+<node pkg="ia_slam" type="ia_slam_node" name="ia_slam2" output="screen">
   <param name="map_frame"  value="map"/>
-  <param name="robot_frame"  value="robot"/>
-  <param name="beacon_topic"  value="beacon_echo"/>
-  <param name="internal_topic"  value="robot_data"/>
+  <param name="robot_frame"  value="robot2"/>
+  <param name="beacon_topic"  value="beacon_echo2"/>
+  <param name="internal_topic"  value="robot_data2"/>
   <param name="sensorPrecision"  value="0.1"/>
   <param name="ros_rate"  value="30"/>
   <param name="nb_outliers"  value="3"/>

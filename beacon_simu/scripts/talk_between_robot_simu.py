@@ -40,7 +40,7 @@ class robot_handler(object):
          self.pub.publish(msg)
 
 if __name__ == '__main__':
-    robot_number = 2
+    robot_number = 3
     pose_topic = 'robot_pose'
     base_topic_send = 'extern_robot'
     base_topic_rcv = 'ia_slam'

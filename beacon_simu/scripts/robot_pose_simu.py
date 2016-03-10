@@ -74,6 +74,36 @@ def secondcar():
        pub_intern.publish(msgIntern)
        time.sleep(dt)
 
+
+def thirdcar():  
+    x = np.array([2,2,0,0.5,-0.4]);
+    dt = 1/30.0;
+    u = [0,0];
+    br = tf.TransformBroadcaster()
+    while not rospy.is_shutdown():
+       x=x+f(x,[0,0])*dt
+       quat = tf.transformations.quaternion_from_euler(0, 0, x[2]);
+       br.sendTransform((x[0], x[1], 0),
+                     quat,
+                     rospy.Time.now(),
+                     base_frame,
+                     map_frame)
+       msg = PoseStamped()
+       msg.header.stamp = rospy.get_rostime()
+       msg.header.frame_id = 'map'
+       msg.pose.position.x = x[0]
+       msg.pose.position.y = x[1]
+       msgIntern = Float64MultiArray()
+       msgIntern.data.append(u[0]);
+       msgIntern.data.append(u[1]);
+       #euler = tf.transformations.euler_from_quaternion(quat)
+       msgIntern.data.append(x[2]);
+       msgIntern.data.append(x[3]);
+       msgIntern.data.append(x[4]);
+       pub.publish(msg)
+       pub_intern.publish(msgIntern)
+       time.sleep(dt)
+
 if __name__ == '__main__':
     beacons = [[-4,4],[0,5],[4,-1],[7,-6],[-7,2]]
 
@@ -100,5 +130,7 @@ if __name__ == '__main__':
     pub_intern = rospy.Publisher(data_topic, Float64MultiArray, queue_size=10)
     if typeMove == 0:
        onecar()
-    else:
+    elif typeMove==1:
        secondcar()
+    else:
+       thirdcar()
