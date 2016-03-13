@@ -23,8 +23,8 @@ IaSlam::IaSlam():start(false)
         ros_rate = 30;
     if (!nh_private_.getParam ("nb_outliers", nb_outliers_))
         nb_outliers_ = 3;
-    if (!nh_private_.getParam ("max_box", max_box_))
-        max_box_ = 10;
+    if (!nh_private_.getParam ("max_past_iter", max_past_iter_))
+        max_past_iter_ = 1000;
     if (!nh_private_.getParam ("gps_precision", gps_precision_))
         gps_precision_ = 1;
     if (!nh_private_.getParam ("division_box_rate", division_box_))
@@ -37,6 +37,10 @@ IaSlam::IaSlam():start(false)
         speed_precision_ = 0.05;
     if (!nh_private_.getParam ("headingWheel_precision", headingWheel_precision_))
         headingWheel_precision_ = 0.01;
+    if (!nh_private_.getParam ("id_robot", id_robot_))
+        id_robot_ = 0;
+    if (!nh_private_.getParam ("quick_start", quickstart_))
+        quickstart_ = true;
     
     service_ = nh_private_.advertiseService("starter", &IaSlam::starterControl,this);
     beacon_sub_ = nh_.subscribe(beacon_topic_,1, &IaSlam::beaconDist,this);
@@ -44,6 +48,7 @@ IaSlam::IaSlam():start(false)
     external_interv_sub_ = nh_.subscribe(external_interv_topic_,1, &IaSlam::betweenRobot,this);
 
     beacon_pub_ = nh_private_.advertise<ia_msgs::StampedInterval>("beacons", 2);
+    toController_pub_ = nh_private_.advertise<ia_msgs::StampedInterval>("toControllerPoses", 2);
     position_pub_ = nh_private_.advertise<ia_msgs::Interval>("pose", 10);
     state_vector = new IntervalVector(5,Interval(0,0));
     dstate_vector = new IntervalVector(5,Interval(-50,50));
@@ -70,15 +75,18 @@ IaSlam::IaSlam():start(false)
                                  (*X)[3] + (*ud)[0]*(*idt) - (*uX)[3],
                                  (*X)[4] + (*ud)[1]*(*idt) - (*uX)[4]
                                  ));
-    c =new CtcFwdBwd(*distfunc);
+    c = new CtcFwdBwd(*distfunc);
     distContract =new CtcFixPoint(*c,1e-01);
+    //distContract =new Ctc3BCid(*fc);
+    
     s =new CtcFwdBwd(*updfunc);
     updContract =new CtcFixPoint(*s,1e-01);
+    //updContract =new Ctc3BCid(*fs);
 /////////////////////////////////////////////////////////////////////////////////////////////////
     tf::TransformListener listener;
     tf::StampedTransform transform;
     double roll, pitch, yaw;
-    try{// get fisrt position (simulating start of mission with first position known)
+    try{// get fisrt position (simulating start of mission with first known position )
       listener.waitForTransform(map_frame_, base_frame_,
                               ros::Time::now(), ros::Duration(3.0));
       listener.lookupTransform(map_frame_, base_frame_, ros::Time(0), transform);
@@ -89,14 +97,51 @@ IaSlam::IaSlam():start(false)
       (*state_vector)[3] = Interval(2).inflate(0.1);
       start = true;
       lastIter = ros::Time::now();
+      contractTime = ros::Time::now();
     }
     catch (tf::TransformException ex){
       ROS_ERROR("%s",ex.what());
+      ros::shutdown();
       exit(-1);
     }
 }
 
-IaSlam::~IaSlam(){} 
+IaSlam::~IaSlam(){
+   delete state_vector;
+   delete dstate_vector;
+   delete u;
+   delete temp_contract_vector; 
+   delete distContract;
+   delete c;
+   delete updContract;
+   delete s;
+   delete compo;
+   delete x;
+   delete y;
+   delete ax;
+   delete ay;
+   delete d;
+   delete uX;
+   delete ud;
+   delete X;
+   delete idt;
+   delete distfunc;
+   delete updfunc;
+   for (auto it=past.begin(); it!=past.end();++it){
+      delete ((*it).first);
+      for (auto itt=(*it).second.begin();itt!=(*it).second.end();++itt){
+           delete ((*itt).first);
+      }
+   }
+   for (auto it=landmarksMap.begin(); it!=landmarksMap.end();++it){
+      for (auto itt=(*it).second.begin();itt!=(*it).second.end();++itt){
+           delete *itt;
+      }
+   }
+   for (auto it=otherRobotMap.begin(); it!=otherRobotMap.end();++it){
+      delete (*it).second;
+   }
+} 
 
 void IaSlam::dump(){
   ofstream fichier;
@@ -113,22 +158,32 @@ void IaSlam::dump(){
   exit(0);
 }
 
-void IaSlam::publishInterval(){// send interval boxes to rviz and others
+void IaSlam::publishInterval(){// send interval boxes to rviz and/or other robots
    ia_msgs::Interval position_msg;
    ia_msgs::StampedInterval beacons_msg;
    position_msg.header.stamp =  ros::Time::now();
    beacons_msg.header.stamp =  ros::Time::now();
    position_msg.header.frame_id = map_frame_;
    beacons_msg.header.frame_id = map_frame_;
-   for (auto it = landmarksMap.cbegin(); it != landmarksMap.cend(); ++it)
-       intervalToMsg(beacons_msg,(*it).first, (*it).second);
+   //add pose to message
+   ia_msgs::IdInterval selfPos;
    ia_msgs::Interv newPoint;
+   ia_msgs::Interv blandPoint;
    newPoint.position.x = (*state_vector)[0].lb();
    newPoint.position.y = (*state_vector)[1].lb();
    newPoint.position.z = 0;
    newPoint.width = (*state_vector)[0].diam();
    newPoint.height = (*state_vector)[1].diam();
+   blandPoint.height = id_robot_;
    position_msg.data.push_back(newPoint);
+   selfPos.data.push_back(newPoint);
+   selfPos.data.push_back(blandPoint);
+   selfPos.id = 254;
+   beacons_msg.data.push_back(selfPos);
+   ////////////////////////////
+   for (auto it = landmarksMap.cbegin(); it != landmarksMap.cend(); ++it)
+       intervalToMsg(beacons_msg,(*it).first, (*it).second);
+   
    beacon_pub_.publish(beacons_msg);
    position_pub_.publish(position_msg);
 }
@@ -173,6 +228,14 @@ void IaSlam::spin(){
        ia_iter();
   }
 }
+
+void IaSlam::updateOtherRobot(double dtt){
+   for (auto it=otherRobotMap.begin();it!=otherRobotMap.end();++it){
+     double vmax=1;
+     (*((*it).second))[0] += Interval(-vmax,vmax)*dtt;
+     (*((*it).second))[1] += Interval(-vmax,vmax)*dtt;
+  }
+};
 
 
 }//end namespace

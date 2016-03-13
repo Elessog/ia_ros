@@ -6,22 +6,24 @@ namespace ia_slam
 
 void IaSlam::ia_iter(){
      ros::Time nowT  = ros::Time::now();
-     
-     updateState((nowT-lastIter).toSec(),true);
+     double dtt = (nowT-lastIter).toSec();
+     updateOtherRobot(dtt);
+     updateState(dtt,true);
      lastIter = nowT;
      std::vector<std::pair<Interval*,int> > beacs;
-     for (auto it = map.begin(); it != map.end(); ++it){
-       beacs.push_back(std::make_pair(new Interval((*it).second.first),(*it).first));
+     for (auto it = map.cbegin(); it != map.cend(); ++it){
+       beacs.push_back(std::make_pair(new Interval((*it).second),(*it).first));
      }
      IntervalVector *state = new IntervalVector(*state_vector);
      std::pair<IntervalVector*,std::vector<std::pair<Interval*,int> > > newMeas =  std::make_pair(state,beacs);
      past.push_back(newMeas);
      map.clear();
-     if (beacs.size()>0){
+     if ((nowT-contractTime).toSec()>1){
         contractPast();
+        contractTime = nowT;
         //ROS_INFO("Number of past %d",(int) past.size());
      }
-     if (past.size()>1000){
+     if (past.size()>max_past_iter_){//deleting oldest member
         for (auto it=(*(past.begin())).second.begin();it!=(*(past.begin())).second.end();++it)     
             delete (*it).first;
         delete (*(past.begin())).first;
@@ -32,6 +34,7 @@ void IaSlam::ia_iter(){
 }
 
 void IaSlam::updateState(double dtt,bool b = true){
+     
      if (b)
         pastDt.push_back(dtt);
      (*dstate_vector)[3] = (*u)[0]&(Interval(data_robot_[0]).inflate(0.1));//acc
@@ -41,7 +44,7 @@ void IaSlam::updateState(double dtt,bool b = true){
      (*state_vector)[3] += (*dstate_vector)[3]*dtt;
      
      (*state_vector)[4] += (*dstate_vector)[4]*dtt;
-     Interval headingWheel = Interval(data_robot_[4]).inflate(headingWheel_precision_);
+     Interval headingWheel = Interval(data_robot_[4]).inflate(headingWheel_precision_);//mixing  our estimation (euler integration) with sensor information (speed, heading ... )
      (*state_vector)[4] &= headingWheel;
      if ((*state_vector)[4].is_empty())
         (*state_vector)[4] = headingWheel;
@@ -87,7 +90,8 @@ void IaSlam::presentToPast(){
     if (it!=past.end()  && past.size()>2)
     {
       ///////// contract over state equation /////////
-      if (it!=past.end()-1){
+      if (it!=past.end()-1)
+      {
          (*temp_contract_vector).put(0,*((*it).first));
          (*temp_contract_vector).put(5,*((*(it+1)).first));
          (*temp_contract_vector).put(10,*u);
@@ -115,7 +119,7 @@ void IaSlam::pastToPresent(){
     if (it+1!=past.end())
     {
       ///////// contract over state equation /////////
-      /*(*temp_contract_vector).put(0,*((*it).first));
+      (*temp_contract_vector).put(0,*((*it).first));
       (*temp_contract_vector).put(5,*((*(it+1)).first));
       (*temp_contract_vector).put(10,*u);
       (*temp_contract_vector)[12]=Interval(pastDt[idx]);
@@ -123,7 +127,7 @@ void IaSlam::pastToPresent(){
       if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(5,6).is_empty()) {
             *((*it).first) = (*temp_contract_vector).subvector(0,4);
             *((*(it+1)).first) = (*temp_contract_vector).subvector(5,9);
-      }*/
+      }
       //////////////////distance to landmarks /////////////////
       for (auto beaconMeas = (*it).second.begin(); beaconMeas != (*it).second.end();++beaconMeas)
       {
@@ -149,9 +153,9 @@ void IaSlam::contractIterDist(it_beac::iterator &beaconMeas,past_vector::iterato
        int k=0;
        double surface;
        for (int i=0;i<landmarksMap[(*beaconMeas).second].size();i++){
-          if ( surface < (*landmarksMap[(*beaconMeas).second][0])[0].diam() * ((*landmarksMap[(*beaconMeas).second][0])[1].diam()) ){
+          if ( surface < (*landmarksMap[(*beaconMeas).second][i])[0].diam() * ((*landmarksMap[(*beaconMeas).second][i])[1].diam()) ){
              k=i;
-             surface = (*landmarksMap[(*beaconMeas).second][0])[0].diam() * ((*landmarksMap[(*beaconMeas).second][0])[1].diam());
+             surface = (*landmarksMap[(*beaconMeas).second][i])[0].diam() * ((*landmarksMap[(*beaconMeas).second][i])[1].diam());
           }
        }
        (contract_vector)[0] = (*((*it).first))[0];

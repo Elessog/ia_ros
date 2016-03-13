@@ -191,20 +191,22 @@ void StampedIntervalVisual::setMessage( const ia_msgs::StampedInterval::ConstPtr
   list_shape_.clear();
   for (auto itt = msg->data.cbegin(); itt!=msg->data.cend(); ++itt)
   {
-     std::vector<boost::shared_ptr<rviz::Shape> > tmpVector;
-     for  (auto it = itt->data.cbegin(); it!=itt->data.cend(); ++it)
-     {
-       // Convert the geometry_msgs::position to an Ogre::Vector3.
-       Ogre::Vector3 pose( (*it).position.x+(*it).width/2.0, (*it).position.y+(*it).height/2.0, 0);
+     if ((*itt).id !=254){
+        std::vector<boost::shared_ptr<rviz::Shape> > tmpVector;
+        for  (auto it = itt->data.cbegin(); it!=itt->data.cend(); ++it)
+        {
+          // Convert the geometry_msgs::position to an Ogre::Vector3.
+          Ogre::Vector3 pose( (*it).position.x+(*it).width/2.0, (*it).position.y+(*it).height/2.0, 0);
 
-       // Scale the arrow's thickness in each dimension along with its length.
-       Ogre::Vector3 scale( (*it).width, (*it).height, 0 );
-       boost::shared_ptr<rviz::Shape> shape_(new rviz::Shape(rviz::Shape::Type(1), scene_manager_, frame_node_ ));
-       shape_->setScale( scale );
-       shape_->setPosition( pose );
-       tmpVector.push_back(shape_);
+          // Scale the arrow's thickness in each dimension along with its length.
+          Ogre::Vector3 scale( (*it).width, (*it).height, 0 );
+          boost::shared_ptr<rviz::Shape> shape_(new rviz::Shape(rviz::Shape::Type(1), scene_manager_, frame_node_ ));
+          shape_->setScale( scale );
+          shape_->setPosition( pose );
+          tmpVector.push_back(shape_);
+        }
+        list_shape_.push_back(tmpVector);
      }
-     list_shape_.push_back(tmpVector);
   }
 }
 

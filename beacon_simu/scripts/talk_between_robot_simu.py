@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import rospy,time
 from geometry_msgs.msg import PoseStamped
-from ia_msgs.msg import StampedInterval
+from ia_msgs.msg import StampedInterval,Interv
 import numpy as np
-import tf
+import tf,copy
+import math as m
 
 class robot_handler(object):
      def __init__(self,number):
@@ -29,12 +30,18 @@ class robot_handler(object):
      def check_send(self,msg):
          for handler in  handlers:
             if (handler.is_close_enough(self.position) and not self.id == handler.get_id()):
-                handler.send(msg)
+               if len(msg.data) > 0:
+                msgT =  copy.deepcopy(msg)
+                msgT.data[0].data[1].width = m.sqrt(handler.get_distance2(self.position))
+                handler.send(msgT)
+
+     def get_distance2(self,position):
+         return (position.x-self.position.x)**2+(position.y-self.position.y)**2 
 
      def is_close_enough(self,position):
          if not self.begin:
             return False
-         return (position.x-self.position.x)**2+(position.y-self.position.y)**2 < limit_distance**2          
+         return self.get_distance2(position) < limit_distance**2          
 
      def send(self,msg):
          self.pub.publish(msg)

@@ -14,6 +14,7 @@
 #include <ibex_CtcSegment.h>
 #include <ibex_CtcQInter.h>
 #include <ibex_CtcPixelMap.h>
+#include "ibex_Ctc3BCid.h"
 
 #include "ia_msgs/StampedInterval.h"
 #include "ia_msgs/Interval.h"
@@ -45,7 +46,9 @@ class IaSlam
    double k2_;
    int ros_rate;
    int nb_outliers_;
-   int max_box_;
+   int max_past_iter_;
+   int id_robot_;
+   bool quickstart_;
 
    ros::NodeHandle nh;
    std::string map_frame_;
@@ -61,7 +64,9 @@ class IaSlam
    ros::ServiceServer service_;
    ros::Publisher beacon_pub_;
    ros::Publisher position_pub_;
+   ros::Publisher toController_pub_;
    ros::Time lastIter;
+   ros::Time contractTime;
    double sensorPrecision_;
    double gps_precision_;
    double division_box_;
@@ -71,8 +76,8 @@ class IaSlam
   
    bool starterControl(ia_msgs::Start_Slam::Request &req,ia_msgs::Start_Slam::Response &res);
 
-   std::map<int,std::pair<Interval,bool> > map;
-   std::map<int,std::pair<Interval,bool> > waitMap;
+   std::map<int,Interval > map;
+   std::map<int,IntervalVector*> otherRobotMap;
    std::map<int,std::vector< IntervalVector*> > landmarksMap;
    void beaconDist(const ia_msgs::BeaconDist msg);
    void internRobot(const std_msgs::Float64MultiArray msg);
@@ -82,6 +87,7 @@ class IaSlam
    void intervalToMsg(ia_msgs::StampedInterval &interv,int i, const std::vector<IntervalVector*> &boxes);
    void msgToBoxes(std::vector< IntervalVector*> &newBoxes,const std::vector<ia_msgs::Interv> data);
    void updateState(double dtt,bool b);
+   void updateOtherRobot(double dt);
    void contractPast();
    void presentToPast();
    void pastToPresent();

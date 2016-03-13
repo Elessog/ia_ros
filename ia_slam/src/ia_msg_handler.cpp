@@ -7,8 +7,11 @@ namespace ia_slam
 void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
 {
   //ROS_INFO("delay : %f",(msg.header.stamp-ros::Time::now()).toSec());
-  start = true;
-  map[msg.id] = std::make_pair(Interval(msg.distance).inflate(sensorPrecision_),true);
+  if (quickstart_)
+     start = true;
+  else if (!start)
+     return;
+  map[msg.id] = Interval(msg.distance).inflate(sensorPrecision_);
   std::map<int,std::vector< IntervalVector*> >::iterator itL;
   IntervalVector contract_vector(5);
   itL = landmarksMap.find(msg.id);
@@ -39,14 +42,15 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
                   baseIntTmp[i][1] |= contract_vector[1];
                   otherIntTmp[j][0] |= contract_vector[2];
                   otherIntTmp[j][1] |= contract_vector[3];
-                  j++;
+                  ++j;
                }
-               i++;
+              ++i;
            }
 ////////////////////////:managing empty set ////////////////////////
          //////////////////////////////////////////////////////
            std::vector<IntervalVector*> baseIntToRemove;
            std::vector<IntervalVector*> otherIntToRemove;
+
            for (i = 0;i<baseIntTmp.size();i++)
            {
                if (baseIntTmp[i].is_empty())
@@ -89,7 +93,7 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
                   (*(landmarksMap[(*it).id][i])).put(0,otherIntTmp[i]);
            }
 
-           if (otherIntToRemove.size() != landmarksMap[(*it).id].size()){
+           if (otherIntToRemove.size() != landmarksMap[(*it).id].size()){// if we don't have to erase all box we proceed to delete the empty one
               for (auto ist = otherIntToRemove.cbegin();ist!=otherIntToRemove.end();ist++)
               {
                  auto position = std::find(landmarksMap[(*it).id].begin(), landmarksMap[(*it).id].end(), *ist);
@@ -100,7 +104,7 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
                  }
            }
            }
-           else{
+           else{ //else we make the union of all boxes to restore a bigger box (because it means we had over reduce the boxes)
              IntervalVector newX(2,Interval::EMPTY_SET);
              for (auto ist = landmarksMap[(*it).id].cbegin();ist!=landmarksMap[(*it).id].cend();ist++)
              {
@@ -118,10 +122,33 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
 }
 
 void IaSlam::betweenRobot(const ia_msgs::StampedInterval msg){
-  ROS_INFO("received msg from other");
+  ROS_INFO("received msg from other %f",(*msg.data.cbegin()).data[1].width);
   std::map<int,std::vector< IntervalVector*> >::iterator itL;
   IntervalVector contract_vector(5);
-  for (auto landIt=msg.data.cbegin(); landIt!=msg.data.cend();++landIt){
+
+  IntervalVector other(2);
+  other[0] = Interval((*msg.data.cbegin()).data[0].position.x,(*msg.data.cbegin()).data[0].position.x+(*msg.data.cbegin()).data[0].width);
+  other[1] = Interval((*msg.data.cbegin()).data[0].position.y,(*msg.data.cbegin()).data[0].position.y+(*msg.data.cbegin()).data[0].height);
+  (contract_vector)[0] = (*state_vector)[0];
+  (contract_vector)[1] = (*state_vector)[1];
+  (contract_vector)[2] = other[0];
+  (contract_vector)[3] = other[1];
+  (contract_vector)[4] = Interval((*msg.data.cbegin()).data[1].width);//.inflate(sensorPrecision_);
+  distContract->contract(contract_vector);
+  (*state_vector)[0] = (contract_vector)[0];
+  (*state_vector)[1] = (contract_vector)[1];
+  //update pose of other robot
+  std::map<int,IntervalVector* >::iterator itOther;
+  itOther = otherRobotMap.find((int) (*msg.data.cbegin()).data[1].height);
+  if (itOther != otherRobotMap.end())
+  {
+     (*(otherRobotMap[(int) (*msg.data.cbegin()).data[1].height])).put(0,other); 
+  }
+  else{
+     otherRobotMap[(int) (*msg.data.cbegin()).data[1].height] = new IntervalVector(other);
+  }
+
+  for (auto landIt=msg.data.cbegin()+1; landIt!=msg.data.cend();++landIt){
      //convert to interval
      std::vector< IntervalVector*> newBoxes;
      msgToBoxes(newBoxes,(*landIt).data);
