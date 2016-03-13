@@ -1,0 +1,12 @@
+In recent years the world has seen a multiplication of robots (we will consider a robot as a machine which does not need human interactions during its runtime in the doing of its task – for example an autonomous robot instead of a remotely operated vehicles-) but they stay mainly in known places it is sure for robots that does not need to move but, even for mobile robots such as factory robot that have to move products, they generally do not go in unknown places. This is because a robot needs a good localization to carry out its tasks. In outdoor and open environment this localization can be given by a GPS (Global Positioning System) like for the Google Car, an autonomous vehicle that can go into traffic. But in some environments this information is not available, underwater and in covert environments (indoor, dense forest). In such places the robot has to ask itself two questions:\\
+
+-	What is my environment?\\
+
+-	Where am I?\\
+
+Those questions correspond to the SLAM problem, SLAM is an acronym for Simultaneous Localization and Mapping, this corresponds to the situation of the chicken and the egg because to know where is the robot must know the map and to map the environment it needs to know it.\\
+
+The context of our problem is the localization of underwater vehicles in order to explore the environment (to detect mines for example), their localization would be done with the help of beacons with unknown positions (dropped on the zone before the manoeuvre).  This problem can be considered as a SLAM problem.\\
+More than one robot would be deployed, this means that they can collaborate in order to be more efficient, for faster exploration and more adaptable. Using multiple robots can be viewed as using a swarm of robots, and  for the swarm to be efficient, it can be useful for the robots to share the information and their mapping data (this can be used to avoid robots exploring the same area)  this initiates the problem of the map merging.\\
+
+This report will explain different methods of SLAM and map merging with the goal of choosing one that will be more appropriate for the task.Then

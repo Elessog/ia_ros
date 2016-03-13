@@ -26,3 +26,16 @@
 *.exe
 *.out
 *.app
+
+
+#tex
+
+*.log
+*.bbl
+*.lof
+*.out
+*.pdf
+*.gz
+*.toc
+*.blg
+*.lot

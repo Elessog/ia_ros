@@ -1,0 +1,75 @@
+\documentclass[12pt,fleqn]{report} %taille de la police par défaut, et équations jusitifées à gauche
+\input{packages}     % Ce fichier contient tous les packages nécessaires à la compilation
+
+\begin{document}
+\renewcommand{\contentsname}{Contents}	% Nom pour la table des matières
+\renewcommand{\bibname}{Bibliography}	% Nom pour les références bibliographiquessss
+
+%----------------------------------------------------------------------------------------
+%	PAGE DE GARDE
+%----------------------------------------------------------------------------------------
+\input{frontpage}
+
+
+%----------------------------------------------------------------------------------------
+%	SOMMAIRE
+%----------------------------------------------------------------------------------------
+\tableofcontents  % Imprime le sommaire
+\cleardoublepage  % pour commencer sur une page impaire
+
+
+%----------------------------------------------------------------------------------------
+%	Préambules
+%----------------------------------------------------------------------------------------
+\chapter*{Acknowledgement}
+\addcontentsline{toc}{chapter}{Acknowledgement}
+%%\input{acknowledgement}
+%%
+%%
+\listoffigures  % table des figures
+%\listoftables   % table des tableaux
+%%%----------------------------------------------------------------------------------------
+%%%	PART I 
+%%%----------------------------------------------------------------------------------------
+\chapter{Introduction}
+\input{introduction}
+%%
+\chapter{Status Report}
+\section{Representation}
+\input{representation}
+\section{Classical methods for SLAM}
+\input{oldslam}
+\section{SLAM via Interval Analysis}
+\input{ia_intro_slam}
+\section{With Multiple Robots}
+\input{intro_mult_robot}
+\section{Direction}
+\input{direction}
+
+\chapter{Theoretic}
+\chapter{Implementation}
+\section{ROS}
+\section{Computational problems}
+
+\chapter{Results}
+
+\chapter{Conclusion}
+%----------------------------------------------------------------------------------------
+%%\appendix
+%%\chapter*{Appendix}
+%%\addcontentsline{toc}{chapter}{Appendix}
+%%\chapter{Appendix 1}
+%%\chapter{Appendix 2}
+%%\chapter{Appendix 3}
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHIE
+%----------------------------------------------------------------------------------------
+\addcontentsline{toc}{part}{Bibliography}
+%\bibliographystyle{apalike-fr}
+\bibliographystyle{plain}
+\bibliography{bibliographie}
+\nocite{*}
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
