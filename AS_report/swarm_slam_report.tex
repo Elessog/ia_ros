@@ -1,4 +1,4 @@
-\documentclass[12pt,fleqn]{report} %taille de la police par défaut, et équations jusitifées à gauche
+\documentclass[12pt,fceqn]{report} %taille de la police par défaut, et équations jusitifées à gauche
 \input{packages}     % Ce fichier contient tous les packages nécessaires à la compilation
 
 \begin{document}
@@ -31,7 +31,8 @@
 %%%----------------------------------------------------------------------------------------
 %%%	PART I 
 %%%----------------------------------------------------------------------------------------
-\chapter{Introduction}
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
 \input{introduction}
 %%
 \chapter{Status Report}
@@ -47,13 +48,16 @@
 \input{direction}
 
 \chapter{Theoretic}
+\input{theoretic}
 \chapter{Implementation}
 \section{ROS}
+\input{ros}
 \section{Computational problems}
 
 \chapter{Results}
 
-\chapter{Conclusion}
+\chapter*{Conclusion}
+\addcontentsline{toc}{part}{Conclusion}
 %----------------------------------------------------------------------------------------
 %%\appendix
 %%\chapter*{Appendix}
@@ -68,6 +72,7 @@
 %\bibliographystyle{apalike-fr}
 \bibliographystyle{plain}
 \bibliography{bibliographie}
+\addcontentsline{toc}{part}{Bibliography}
 \nocite{*}
 
 %----------------------------------------------------------------------------------------
