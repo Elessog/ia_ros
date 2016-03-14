@@ -14,7 +14,6 @@
   <param name="base_frame"  value="robot1"/>
 </node>
 
-
 <node pkg="beacon_simu" type="beacon_simu_node.py" name="beacon_simu2">
   <param name="beacon_topic"  value="beacon_echo2"/>
   <param name="pose_topic"  value="robot_pose2"/>
@@ -43,5 +42,6 @@
   <param name="base_frame"  value="robot3"/>
 </node>
 
+<node pkg="beacon_simu" type="talk_between_robot_simu.py" name="talk_between_robot_simu_node"></node>
 
 </launch>

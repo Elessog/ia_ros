@@ -77,7 +77,7 @@ IaSlam::IaSlam():start(false)
                                  ));
     c = new CtcFwdBwd(*distfunc);
     distContract =new CtcFixPoint(*c,1e-01);
-    //distContract =new Ctc3BCid(*fc);
+    distCut =new Ctc3BCid(*distContract);
     
     s =new CtcFwdBwd(*updfunc);
     updContract =new CtcFixPoint(*s,1e-01);
@@ -158,58 +158,7 @@ void IaSlam::dump(){
   exit(0);
 }
 
-void IaSlam::publishInterval(){// send interval boxes to rviz and/or other robots
-   ia_msgs::Interval position_msg;
-   ia_msgs::StampedInterval beacons_msg;
-   position_msg.header.stamp =  ros::Time::now();
-   beacons_msg.header.stamp =  ros::Time::now();
-   position_msg.header.frame_id = map_frame_;
-   beacons_msg.header.frame_id = map_frame_;
-   //add pose to message
-   ia_msgs::IdInterval selfPos;
-   ia_msgs::Interv newPoint;
-   ia_msgs::Interv blandPoint;
-   newPoint.position.x = (*state_vector)[0].lb();
-   newPoint.position.y = (*state_vector)[1].lb();
-   newPoint.position.z = 0;
-   newPoint.width = (*state_vector)[0].diam();
-   newPoint.height = (*state_vector)[1].diam();
-   blandPoint.height = id_robot_;
-   position_msg.data.push_back(newPoint);
-   selfPos.data.push_back(newPoint);
-   selfPos.data.push_back(blandPoint);
-   selfPos.id = 254;
-   beacons_msg.data.push_back(selfPos);
-   ////////////////////////////
-   for (auto it = landmarksMap.cbegin(); it != landmarksMap.cend(); ++it)
-       intervalToMsg(beacons_msg,(*it).first, (*it).second);
-   
-   beacon_pub_.publish(beacons_msg);
-   position_pub_.publish(position_msg);
-}
 
-void IaSlam::intervalToMsg(ia_msgs::StampedInterval &interv,int i ,const std::vector<IntervalVector*> &boxes){
-     ia_msgs::IdInterval newList;
-     newList.id = i;
-     for (auto box = boxes.cbegin();box!=boxes.cend();box++)
-     { 
-       ia_msgs::Interv newPoint;
-       newPoint.position.x = (*(*box))[0].lb();
-       newPoint.position.y = (*(*box))[1].lb();
-       newPoint.position.z = 0;
-       newPoint.width = (*(*box))[0].diam();
-       newPoint.height = (*(*box))[1].diam();
-       newList.data.push_back(newPoint);
-     }
-     interv.data.push_back(newList);
-}
-
-void IaSlam::internRobot(const std_msgs::Float64MultiArray msg)
-{
-  data_robot_.clear();
-  for (auto it = msg.data.cbegin();it!=msg.data.cend();it++)
-     data_robot_.push_back(*it);
-}
 
 bool IaSlam::starterControl(ia_msgs::Start_Slam::Request &req,ia_msgs::Start_Slam::Response &res){
   start = req.demand; 

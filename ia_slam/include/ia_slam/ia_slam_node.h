@@ -86,6 +86,7 @@ class IaSlam
    void publishInterval();
    void intervalToMsg(ia_msgs::StampedInterval &interv,int i, const std::vector<IntervalVector*> &boxes);
    void msgToBoxes(std::vector< IntervalVector*> &newBoxes,const std::vector<ia_msgs::Interv> data);
+   void toControllerMsg();
    void updateState(double dtt,bool b);
    void updateOtherRobot(double dt);
    void contractPast();
@@ -104,6 +105,7 @@ class IaSlam
    past_vector past;
    std::vector<double> pastDt;
    CtcFixPoint *distContract;
+   Ctc3BCid *distCut;
    CtcFwdBwd *c;
    CtcFixPoint *updContract;
    CtcFwdBwd *s;

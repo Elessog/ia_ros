@@ -8,7 +8,9 @@ void IaSlam::ia_iter(){
      ros::Time nowT  = ros::Time::now();
      double dtt = (nowT-lastIter).toSec();
      updateOtherRobot(dtt);
+     toControllerMsg();
      updateState(dtt,true);
+     
      lastIter = nowT;
      std::vector<std::pair<Interval*,int> > beacs;
      for (auto it = map.cbegin(); it != map.cend(); ++it){

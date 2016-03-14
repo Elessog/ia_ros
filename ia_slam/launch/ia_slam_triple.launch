@@ -15,6 +15,7 @@
   <param name="max_past_iter"  value="$(arg max_iter)"/>
   <param name="gps_precision"  value="0.2"/>
   <param name="division_box_rate" value="3"/>
+  <param name="id_robot" value="1"/>
 </node>
 
 <node pkg="ia_slam" type="ia_slam_node" name="ia_slam2" output="screen">
@@ -29,6 +30,7 @@
   <param name="max_past_iter"  value="$(arg max_iter)"/>
   <param name="gps_precision"  value="0.2"/>
   <param name="division_box_rate" value="3"/>
+  <param name="id_robot" value="2"/>
 </node>
 
 <node pkg="ia_slam" type="ia_slam_node" name="ia_slam3" output="screen">
@@ -43,6 +45,7 @@
   <param name="max_past_iter"  value="$(arg max_iter)"/>
   <param name="gps_precision"  value="0.2"/>
   <param name="division_box_rate" value="3"/>
+  <param name="id_robot" value="3"/>
 </node>
 
 </launch>
