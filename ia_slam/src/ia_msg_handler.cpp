@@ -11,7 +11,8 @@ void IaSlam::beaconDist(const ia_msgs::BeaconDist msg)
      start = true;
   else if (!start)
      return;
-  map[msg.id] = Interval(msg.distance).inflate(sensorPrecision_);
+  double sensorDt = (ros::Time::now()-msg.header.stamp).toSec();
+  map[msg.id] = Interval(msg.distance).inflate(sensorPrecision_+std::abs(data_robot_[3])*sensorDt);
   std::map<int,std::vector< IntervalVector*> >::iterator itL;
   IntervalVector contract_vector(5);
   itL = landmarksMap.find(msg.id);
@@ -125,7 +126,8 @@ void IaSlam::betweenRobot(const ia_msgs::StampedInterval msg){
   ROS_INFO("received msg from other %f",(*msg.data.cbegin()).data[1].width);
   std::map<int,std::vector< IntervalVector*> >::iterator itL;
   IntervalVector contract_vector(5);
-
+  
+  double sensorDt = (ros::Time::now()-msg.header.stamp).toSec();
   IntervalVector other(2);
   other[0] = Interval((*msg.data.cbegin()).data[0].position.x,(*msg.data.cbegin()).data[0].position.x+(*msg.data.cbegin()).data[0].width);
   other[1] = Interval((*msg.data.cbegin()).data[0].position.y,(*msg.data.cbegin()).data[0].position.y+(*msg.data.cbegin()).data[0].height);
@@ -133,7 +135,7 @@ void IaSlam::betweenRobot(const ia_msgs::StampedInterval msg){
   (contract_vector)[1] = (*state_vector)[1];
   (contract_vector)[2] = other[0];
   (contract_vector)[3] = other[1];
-  (contract_vector)[4] = Interval((*msg.data.cbegin()).data[1].width);//.inflate(sensorPrecision_);
+  (contract_vector)[4] = Interval((*msg.data.cbegin()).data[1].width).inflate(sensorPrecision_+std::abs(data_robot_[3])*sensorDt);
   distCut->contract(contract_vector);
   (*state_vector)[0] = (contract_vector)[0];
   (*state_vector)[1] = (contract_vector)[1];

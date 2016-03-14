@@ -9,11 +9,11 @@
   <param name="beacon_topic"  value="beacon_echo1"/>
   <param name="internal_topic"  value="robot_data1"/>
   <param name="extern_robot_topic" value="extern_robot1"/>
-  <param name="sensorPrecision"  value="0.2"/>
+  <param name="sensorPrecision"  value="0.5"/>
   <param name="ros_rate"  value="30"/>
   <param name="nb_outliers"  value="3"/>
   <param name="max_past_iter"  value="$(arg max_iter)"/>
-  <param name="gps_precision"  value="0.2"/>
+  <param name="gps_precision"  value="1"/>
   <param name="division_box_rate" value="3"/>
   <param name="id_robot" value="1"/>
 </node>
@@ -24,11 +24,11 @@
   <param name="beacon_topic"  value="beacon_echo2"/>
   <param name="internal_topic"  value="robot_data2"/>
   <param name="extern_robot_topic" value="extern_robot2"/>
-  <param name="sensorPrecision"  value="0.2"/>
+  <param name="sensorPrecision"  value="0.5"/>
   <param name="ros_rate"  value="30"/>
   <param name="nb_outliers"  value="3"/>
   <param name="max_past_iter"  value="$(arg max_iter)"/>
-  <param name="gps_precision"  value="0.2"/>
+  <param name="gps_precision"  value="1"/>
   <param name="division_box_rate" value="3"/>
   <param name="id_robot" value="2"/>
 </node>
@@ -39,11 +39,11 @@
   <param name="beacon_topic"  value="beacon_echo3"/>
   <param name="internal_topic"  value="robot_data3"/>
   <param name="extern_robot_topic" value="extern_robot3"/>
-  <param name="sensorPrecision"  value="0.2"/>
+  <param name="sensorPrecision"  value="0.5"/>
   <param name="ros_rate"  value="30"/>
   <param name="nb_outliers"  value="3"/>
   <param name="max_past_iter"  value="$(arg max_iter)"/>
-  <param name="gps_precision"  value="0.2"/>
+  <param name="gps_precision"  value="1"/>
   <param name="division_box_rate" value="3"/>
   <param name="id_robot" value="3"/>
 </node>

@@ -50,9 +50,9 @@ IaSlam::IaSlam():start(false)
     beacon_pub_ = nh_private_.advertise<ia_msgs::StampedInterval>("beacons", 2);
     toController_pub_ = nh_private_.advertise<ia_msgs::StampedInterval>("toControllerPoses", 2);
     position_pub_ = nh_private_.advertise<ia_msgs::Interval>("pose", 10);
-    state_vector = new IntervalVector(5,Interval(0,0));
-    dstate_vector = new IntervalVector(5,Interval(-50,50));
-    temp_contract_vector = new IntervalVector(13,Interval(-50,50));
+    state_vector = new IntervalVector(4,Interval(0,0));
+    dstate_vector = new IntervalVector(4,Interval(-50,50));
+    temp_contract_vector = new IntervalVector(11,Interval(-50,50));
     u = new IntervalVector(2,Interval(-1,1));
 
 ///////////////////////////////// Constraints ////////////////////////////////////////////////////
@@ -61,19 +61,18 @@ IaSlam::IaSlam():start(false)
     ax = new Variable(); //beacon interval
     ay = new Variable();
     d = new Variable();//distance to beacons
-    uX = new Variable(5);//state vector at time t+1
+    uX = new Variable(4);//state vector at time t+1
     ud = new Variable(2);//input on actuators
-    X = new Variable(5);//state vector at time t
+    X = new Variable(4);//state vector at time t
     idt = new Variable();//interval for dt 
     dt = 1/float(ros_rate);
 
     distfunc= new Function(*x,*y,*ax,*ay,*d,sqr(*x-*ax)+sqr(*y-*ay)-sqr(*d)); // distance to beacon constraint
     updfunc= new Function(*X,*uX,*ud,*idt,Return(                             // state equation constraints
-                                 (*X)[0] + (*X)[3]*cos((*X)[4])*cos((*X)[2])*(*idt) - (*uX)[0],
-                                 (*X)[1] + (*X)[3]*cos((*X)[4])*sin((*X)[2])*(*idt) - (*uX)[1],
-                                 (*X)[2] + (*X)[3]*sin((*X)[4])*(*idt)/3.0 - (*uX)[2],
-                                 (*X)[3] + (*ud)[0]*(*idt) - (*uX)[3],
-                                 (*X)[4] + (*ud)[1]*(*idt) - (*uX)[4]
+                                 (*X)[0] + (*X)[3]*cos((*X)[2])*(*idt) - (*uX)[0],
+                                 (*X)[1] + (*X)[3]*sin((*X)[2])*(*idt) - (*uX)[1],
+                                 (*X)[2] + (*ud)[1]*(*idt) - (*uX)[2],
+                                 (*X)[3] + (*ud)[0]*(*idt) - (*uX)[3]
                                  ));
     c = new CtcFwdBwd(*distfunc);
     distContract =new CtcFixPoint(*c,1e-01);
@@ -94,7 +93,7 @@ IaSlam::IaSlam():start(false)
       (*state_vector)[0] = Interval(transform.getOrigin().x()).inflate(gps_precision_);
       (*state_vector)[1] = Interval(transform.getOrigin().y()).inflate(gps_precision_);
       (*state_vector)[2] = Interval(yaw).inflate(0.1);
-      (*state_vector)[3] = Interval(2).inflate(0.1);
+      (*state_vector)[3] = Interval(1).inflate(0.1);
       start = true;
       lastIter = ros::Time::now();
       contractTime = ros::Time::now();

@@ -40,18 +40,10 @@ void IaSlam::updateState(double dtt,bool b = true){
      if (b)
         pastDt.push_back(dtt);
      (*dstate_vector)[3] = (*u)[0]&(Interval(data_robot_[0]).inflate(0.1));//acc
-     (*dstate_vector)[4] = (*u)[1]&(Interval(data_robot_[1]).inflate(0.1));//deltap
-
-      
      (*state_vector)[3] += (*dstate_vector)[3]*dtt;
      
-     (*state_vector)[4] += (*dstate_vector)[4]*dtt;
-     Interval headingWheel = Interval(data_robot_[4]).inflate(headingWheel_precision_);//mixing  our estimation (euler integration) with sensor information (speed, heading ... )
-     (*state_vector)[4] &= headingWheel;
-     if ((*state_vector)[4].is_empty())
-        (*state_vector)[4] = headingWheel;
 
-     (*dstate_vector)[2] = (*state_vector)[3]*sin((*state_vector)[4])/3.0;//thetap
+     (*dstate_vector)[2] = (*u)[1]&(Interval(data_robot_[1]).inflate(0.1));//thetap
      (*state_vector)[2] += (*dstate_vector)[2]*dtt;
 
      Interval heading = Interval(data_robot_[2]).inflate(heading_precision_);
@@ -64,8 +56,8 @@ void IaSlam::updateState(double dtt,bool b = true){
         (*state_vector)[3] = doppler;
      
 
-     (*dstate_vector)[0] = (*state_vector)[3]*cos((*state_vector)[4])*cos((*state_vector)[2]);//x
-     (*dstate_vector)[1] = (*state_vector)[3]*cos((*state_vector)[4])*sin((*state_vector)[2]);//y
+     (*dstate_vector)[0] = (*state_vector)[3]*cos((*state_vector)[2]);//x
+     (*dstate_vector)[1] = (*state_vector)[3]*sin((*state_vector)[2]);//y
      
      (*state_vector)[0] += (*dstate_vector)[0]*dtt;
      (*state_vector)[1] += (*dstate_vector)[1]*dtt;
@@ -95,13 +87,13 @@ void IaSlam::presentToPast(){
       if (it!=past.end()-1)
       {
          (*temp_contract_vector).put(0,*((*it).first));
-         (*temp_contract_vector).put(5,*((*(it+1)).first));
-         (*temp_contract_vector).put(10,*u);
-         (*temp_contract_vector)[12]=Interval(pastDt[idx+1]).inflate(0.05);
+         (*temp_contract_vector).put(4,*((*(it+1)).first));
+         (*temp_contract_vector).put(8,*u);
+         (*temp_contract_vector)[10]=Interval(pastDt[idx+1]).inflate(0.05);
          updContract->contract(*temp_contract_vector);
-         if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(5,6).is_empty()) {
-               *((*it).first) = (*temp_contract_vector).subvector(0,4);
-               *((*(it+1)).first) = (*temp_contract_vector).subvector(5,9);
+         if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(4,5).is_empty()) {
+               *((*it).first) = (*temp_contract_vector).subvector(0,3);
+               *((*(it+1)).first) = (*temp_contract_vector).subvector(4,7);
          }
       }
       //////////////////distance to landmarks /////////////////
@@ -122,13 +114,13 @@ void IaSlam::pastToPresent(){
     {
       ///////// contract over state equation /////////
       (*temp_contract_vector).put(0,*((*it).first));
-      (*temp_contract_vector).put(5,*((*(it+1)).first));
-      (*temp_contract_vector).put(10,*u);
-      (*temp_contract_vector)[12]=Interval(pastDt[idx]);
+      (*temp_contract_vector).put(4,*((*(it+1)).first));
+      (*temp_contract_vector).put(8,*u);
+      (*temp_contract_vector)[10]=Interval(pastDt[idx]);
       updContract->contract(*temp_contract_vector);
-      if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(5,6).is_empty()) {
-            *((*it).first) = (*temp_contract_vector).subvector(0,4);
-            *((*(it+1)).first) = (*temp_contract_vector).subvector(5,9);
+      if (!(*temp_contract_vector).subvector(0,1).is_empty() && !(*temp_contract_vector).subvector(4,5).is_empty()) {
+            *((*it).first) = (*temp_contract_vector).subvector(0,3);
+            *((*(it+1)).first) = (*temp_contract_vector).subvector(4,7);
       }
       //////////////////distance to landmarks /////////////////
       for (auto beaconMeas = (*it).second.begin(); beaconMeas != (*it).second.end();++beaconMeas)

@@ -21,15 +21,24 @@ def f(x,u):
     x[3]*cos(x[4])*sin(x[2]),
     x[3]*sin(x[4])/3,
     u[0],
-    u[1]])
+    0])
     return xdot
 
-def onecar(x):  
+def f2(x,u):
+    xdot=np.array([x[3]*cos(x[2]),
+    x[3]*sin(x[2]),
+    u[1],
+    u[0],
+    0])
+    return xdot
+
+def onecar(x): 
+    global u 
     dt = 1/30.0;
     u = [0,0];
     br = tf.TransformBroadcaster()
     while not rospy.is_shutdown():
-       x=x+f(x,[0,0])*dt
+       x=x+f2(x,u)*dt
        quat = tf.transformations.quaternion_from_euler(0, 0, x[2]);
        br.sendTransform((x[0], x[1], 0),
                      quat,
@@ -42,11 +51,16 @@ def onecar(x):
        msg.pose.position.x = x[0]
        msg.pose.position.y = x[1]
        msgIntern = Float64MultiArray()
-       msgIntern.data.append(u[0]);
-       msgIntern.data.append(u[1]);
-       msgIntern.data.append(x[2]);
-       msgIntern.data.append(x[3]);
-       msgIntern.data.append(x[4]);
+       msgIntern.data.append(u[0])
+       msgIntern.data.append(u[1])
+       msgIntern.data.append(x[2])
+       msgIntern.data.append(x[3])
+       msgIntern.data.append(x[4])
+
+       ## only used in controller test
+       msgIntern.data.append(x[0])
+       msgIntern.data.append(x[1])
+
        pub.publish(msg)
        if show_reach:
          marker.header.stamp = rospy.Time.now();
@@ -83,18 +97,14 @@ if __name__ == '__main__':
           x_pos = rospy.get_param(rospy.get_name()+'/'+"x_pos")
        else:
           rospy.logerr("You must set the initial x_pos")
-          rospy.shutdown() 
        if rospy.has_param(rospy.get_name()+'/'+'y_pos'):
           y_pos = rospy.get_param(rospy.get_name()+'/'+"y_pos")
-          rospy.shutdown()
-       else:
-          rospy.logerr("You must set the initial y_pos")
-       if rospy.has_param(rospy.get_name()+'/'+'theta_pos'):
-          theta_pos = rospy.get_param(rospy.get_name()+'/'+"theta_pos")
-          rospy.shutdown()
        else:
           rospy.logerr("You must set the initial theta_pos")
-          rospy.shutdown()
+       if rospy.has_param(rospy.get_name()+'/'+'theta_pos'):
+          theta_pos = rospy.get_param(rospy.get_name()+'/'+"theta_pos")
+       else:
+          rospy.logerr("You must set the initial theta_pos")
     if rospy.is_shutdown():
        exit(0)
 
@@ -102,7 +112,7 @@ if __name__ == '__main__':
        marker = Marker()
        marker.header.frame_id = base_frame;
        marker.header.stamp = rospy.Time.now();
-       marker.ns = "visu";
+       marker.ns = base_frame;
        marker.id = 0;
        marker.type = 3;
        marker.action = 0;
@@ -121,7 +131,7 @@ if __name__ == '__main__':
        marker.color.g = 1.0;
        marker.color.b = 0.0;
 
-    pub_reach =  rospy.Publisher("visu_"+base_frame, Marker, queue_size=1)
+    pub_reach =  rospy.Publisher("visu_reach", Marker, queue_size=1)
     pub = rospy.Publisher(pose_topic , PoseStamped, queue_size=10)
     pub_intern = rospy.Publisher(data_topic, Float64MultiArray, queue_size=10)
     ##
