@@ -178,7 +178,55 @@ This contraction will supposedly greatly improve the estimation of the beacons a
 
 \section{Controlling the robots}
 
-The mission followed by the robots is to scan an area, with multiple robots the area can be divided between the robots (at least one robot by area)
+The mission followed by the robots is to scan an area, with multiple robots the area can be divided between the robots (at least one robot by area).
+
 \subsection{Path Generation}
 
+The area is divided in a decided number of cases:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=1]{areascanning.png}
+\caption{Paving of an area to scan.}
+\label{fig:areaScan}
+\end{figure}
+
+A robot will be ordered to scan a chosen case, it will make a first pass to acquire the positions of the beacons then a more thorough pass to make scan the case.
+
+\begin{figure}[H]
+\centering
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[scale=0.8,angle=0]{firstpass.png}
+    \caption{Path of the first pass to detect beacons.}
+    \label{fig:firstpass}
+    \end{minipage}
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[scale=0.8,angle=0]{secondpass.png}
+    \caption{Path of the second pass.}
+    \label{fig:secondpass}
+    \end{minipage}
+\end{figure}
+
+This last pass is used very often in area scanning with underwater vehicles.
+
+
 \subsection{Following the path and considering the other robots}
+
+The method chosen to control the robots for the path following and the obstacles avoidance is the potential field method. It has been chosen for its easy implementation and manipulation as itpermit to manage movable obstacles such as the other robots.
+The robot is seen as an electric particle in a electric field and respond to it with the relation:
+
+$\mathbf{f} = -\textnormal{grad}(V(\mathbf{p}))$ (page 77, ~\cite{jaulin2015mobile})\\
+
+Where $\mathbf{p}$ is the position of the robot and $V$ its potential and $\mathbf{f}$ the force applied to the robot. If the robot need to go to a chosen point,the point will apply an attractive force on the robot and if another robot is approaching it will apply a repulsive force.
+
+\begin{figure}[H]
+\centering
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[scale=0.9,angle=0]{potentialCar1.png}
+    \end{minipage}
+    \begin{minipage}[b]{0.4\textwidth}
+    \includegraphics[scale=1,angle=0]{potentialCar2.png}
+    \end{minipage}
+    \caption{Car following an attractive point with potential field method with presence of a repulsive point}
+    \label{fig:attractrep}
+\end{figure}
