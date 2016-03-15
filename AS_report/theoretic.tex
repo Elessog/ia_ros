@@ -128,7 +128,7 @@ When receiving data from a beacon a contractor over the distance between beacon 
 \end{algorithm}
 
 But as written in ~\ref{sssec:contract} the estimate box for the beacons can be paved, that change the precedents 
-algorithms when treating with a beacon estimate (\ref{op:distB_1},\ref{op:distB_2},\ref{op:distB_3}). A algorithm for the distance constraint between two set of boxes must be done:
+algorithms when treating with a beacon estimate (\ref{op:distB_1},\ref{op:distB_2},\ref{op:distB_3}). A algorithm for the distance constraint between two set of boxes must be executed:
 
 \begin{algorithm}[H]
 \caption{Distance Constraint Application on two set of boxes }
@@ -155,6 +155,30 @@ With the algorithms~\ref{alg:iterSlam},~\ref{alg:distBetBeaconsSlam},~\ref{alg:d
 
 \subsection{With more robots}
 
-When using multiple robots, each robot can obtain the estimations of the map from the other robots (if there is transmission), in the context of the mission the first position is known (the box for the pose estimate has a little width depending on the GPS data) therefore the position of the boxes is sure between the robots. When receiving data from another robots, 
+When using multiple robots, each robot can obtain the estimations of the map from the other robots (if there is transmission), in the context of the mission the first position is known (the box for the pose estimate has a little width depending on the GPS data) therefore the position of the boxes is sure between the robots. When receiving data from another robots, one robot will fuse the estimates of the beacons from the other robots with its own estimates:
+
+\begin{algorithm}[H]
+\caption{Fusion of beacon estimate between robots}
+\label{alg:fuseDataRobotSet}
+\begin{algorithmic}[1]
+\REQUIRE $b$: a beacon\\
+   $\mathbb{B_{\textnormal{1}}}$ : set of boxes estimating the beacon b by the robot receiving the data\\
+   $\mathbb{B_{\textnormal{2}}}$ : set of boxes estimating the beacon b by the robot sending the data
+\STATE $\mathbb{T_{\textnormal{1}}} \leftarrow$ Vector of empty boxes of the same size of $\mathbb{B_{\textnormal{1}}}$
+\FOR{$box_1 \in \mathbb{B_{\textnormal{1}}}$}
+\FOR{$box_2 \in \mathbb{B_{\textnormal{2}}}$}
+\STATE $\mathbb{T_{\textnormal{1}}}(box_1) \leftarrow  \mathbb{T_{\textnormal{1}}}(box_1)  \cup (box_{1} \cap box_{2})$
+\ENDFOR
+\ENDFOR
+\STATE $\mathbb{B_{\textnormal{1}}} \leftarrow \mathbb{T_{\textnormal{1}}}\setminus\{box \in \mathbb{T_{\textnormal{1}}} \mid box = \emptyset \}$
+\end{algorithmic}
+\end{algorithm}
+
+This contraction will supposedly greatly improve the estimation of the beacons as the robots do not start the mission at the same position they will see the world differently, therefore the intersection of their vision will be efficient.
 
 \section{Controlling the robots}
+
+The mission followed by the robots is to scan an area, with multiple robots the area can be divided between the robots (at least one robot by area)
+\subsection{Path Generation}
+
+\subsection{Following the path and considering the other robots}
