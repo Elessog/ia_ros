@@ -40,3 +40,9 @@
 *.blg
 *.lot
 *.aux
+*.glo
+*.glsdefs
+*.ist
+*.nav
+*.snm
+*~

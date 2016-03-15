@@ -1,7 +1,7 @@
 The methods seen approach the problem from a probabilistic point of view but, are not guaranteed, it relies on the probability of the robot to not be an outlier, and when we need a sure position of the robot it could lead to a failure (in a harmful environment or in interaction with humans it would be hazardous). The interval analysis means to guarantee the result, and is not subject to approximation because it does not need to linearise the problem. Interval Analysis has grown to be a competent alternative to the probabilistic methods.
 
 \subsection{Interval Analysis}
-
+\label{sec:srIA}
 In the Intervals theory a real number is replaced by an interval with an uncertainty represented by its width that includes the right number, for a known x the corresponding interval could be $[ \,x,-\epsilon,x+\epsilon] \,$ with a width of $2\epsilon$.
 
 \begin{figure}[H]
@@ -22,7 +22,7 @@ But X can also be contracted by going backwards:\\
 
 $X=X\cap \sqrt{Y} =[\,0,\sqrt{5}]\,$\\
 
-This operation is a forward-backward contractor ~\cite{jaulin2001applied}.
+This operation is a forward-backward contractor~\cite{jaulin2001applied} and~\cite{chabert2009contractor}.
 
 \begin{figure}[H]
 \centering

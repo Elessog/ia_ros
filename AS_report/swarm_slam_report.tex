@@ -1,4 +1,4 @@
-\documentclass[12pt,fceqn]{report} %taille de la police par défaut, et équations jusitifées à gauche
+\documentclass[12pt]{report} %taille de la police par défaut, et équations jusitifées à gauche
 \input{packages}     % Ce fichier contient tous les packages nécessaires à la compilation
 
 \begin{document}
@@ -41,6 +41,7 @@
 \section{Classical methods for SLAM}
 \input{oldslam}
 \section{SLAM via Interval Analysis}
+\label{sec:slamIA}
 \input{ia_intro_slam}
 \section{With Multiple Robots}
 \input{intro_mult_robot}
@@ -54,7 +55,7 @@
 \input{ros}
 \section{Computational problems}
 
-\chapter{Results}
+\chapter{Results}\label{ch:results}
 
 \chapter*{Conclusion}
 \addcontentsline{toc}{part}{Conclusion}
@@ -74,6 +75,9 @@
 \bibliography{bibliographie}
 \addcontentsline{toc}{part}{Bibliography}
 \nocite{*}
+
+
+
 
 %----------------------------------------------------------------------------------------
 

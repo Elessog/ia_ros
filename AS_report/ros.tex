@@ -1,11 +1,3 @@
 ROS (Robotic Operating System) is an open source framework made toward robotic application.
 The goal of ROS is to propose means to facilitate communication between processes,managing possibilities
 and regroup working algorithms.
-
-Dans la figure est la représentation du fonctionnement basique de ROS un nœud « Master » qui gère l’envoie des messages et services entres nœuds, ces nœuds sont des programmes pouvant avoir différents buts par exemple le nœud 2 pourrait être un nœud qui s’occupe de récupéré l’image d’une caméra puis l’envoie au nœud 1 par un système de publication et de suscription :
-
-Le nœud 2 publie au master son message voit que le nœud 1 est inscrit en tant souscripteur et va donc recevoir le message
-
-Le nœud 1 va pourrait alors analyser l’image et remarquer un rectangle rouge dans l’image et va alors demandé un service au nœud 3 qui s’occupe des commandes moteurs :
-
-Le nœud 3 indique au master qu’il a un service disponible (ex arrêt d’urgence), le nœud 1 fait appelle au service le nœud va ensuite analyser la demande et répondre (en général si la demande a réussi, tel que l’arrêt d’urgence) 
