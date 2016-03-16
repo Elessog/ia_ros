@@ -1,12 +1,12 @@
 If the context of the mission is established, the property of the robots are not :
-  
+ 
 \begin{itemize}[label=$-$,itemsep=0cm,topsep=0cm]
 \item The robots will have a maximum range of intercommunication;
 \item The robots will have a maximum range of beacons detection;
 \item The robots have access to their heading and speed;
 \item The beacons are recognizable;
 \item The beacons do not move during the mission;
-\item The beacons can ping themselves and transmit the information to the robots;
+\item The beacons can ping themselves and send information to the robots;
 \item The distance information and communication are not available continuously.
 \end{itemize}
 
@@ -20,13 +20,13 @@ As seen in~\ref{sec:slamIA} the SLAM with recognizable landmarks can be done (an
 For the SLAM two contractors are needed (see ~\ref{sec:srIA}), a distance contractor between the robot and a beacon position, for the beacons between themselves (as they can know their distances), a robot state contractor to spread the constraint over the time.
 
 \subparagraph{Distance Contractor}
-The Distance contractor is based on a simple function, the euclidean distance:
+The Distance contractor is based on a simple function, the Euclidean distance:
 
 \begin{equation}
-(R_{x}-B_{x})^{2}+(R_{y}-B_{y})^{2} = d_{RB} 
+(R_{x}-B_{x})^{2}+(R_{y}-B_{y})^{2} = d_{RB}
 \end{equation}
 
-Where R is the box containing the robot and B the box for the beacon and $d_{RB}$ the interval of the measure. This contractor with the euclidean distance is not very efficient, indeed if the pose of the robot is known but the beacon has not been estimated yet, the output will be the box containing the circle with the measured distance as a rayon surrounding the robot.To improve the computation the contracted box can be cut into a grid and then the different cases would be fed to the contractor and the remaining non-empty boxes would be kept.
+Where R is the box containing the robot and B the box for the beacon and $d_{RB}$ the interval of the measure. This contractor with the Euclidean distance is not very efficient, indeed if the pose of the robot is known but the beacon has not been estimated yet, the output will be the box containing the circle with the measured distance as a rayon surrounding the robot.To improve the computation the contracted box can be cut into a grid and then the different cases would be fed to the contractor and the remaining non-empty boxes would be kept.
 
 
 \begin{figure}[H]
@@ -43,11 +43,11 @@ Where R is the box containing the robot and B the box for the beacon and $d_{RB}
     \end{minipage}
 \end{figure}
 
-In figure~\ref{fig:picture_no_sivia} the position will be difficult to improve and in ~\ref{fig:sivia_distcontraint} the estimates of the beacons are better as the space between the robot and a beacon is not considered as a feasible position.
+In figure~\ref{fig:picture_no_sivia} the position will be difficult to improve and in ~\ref{fig:sivia_distcontraint} the estimates of the beacons are better as the space between the robot and a beacon is not considered as a possible position.
 
 \subparagraph{Robot State Contractor}
 
- The interest of this contractor is to use a the contraction made by a beacon a a time $t_{1}$ to improve the estimate the robot over the time which can then improve the estimate of a beacon via a measure at a time $t_{2}$.
+ The interest of this contractor is to use a the contraction made by a beacon a time $t_{1}$ to improve the estimate the robot over the time which can then improve the estimate of a beacon via a measure at a time $t_{2}$.
 
 The contractor is made by knowing how the robot can move therefore the state equation of the robot is needed, for the report the state equation of a car is used:
 
@@ -58,7 +58,7 @@ The contractor is made by knowing how the robot can move therefore the state equ
 \dot{v} &= u_{2}
 \end{align}
 
-Then considering $u$ the input of the robot, $dt$ the incrementation duration, the time $t_{1}$ and the time $t_{2}=t_{1}+dt$ and $X(t)$ the state vector at the time $t$ the contractor is based on the following equation:  
+Then considering $u$ the input of the robot, $dt$ the incrementation duration, the time $t_{1}$ and the time $t_{2}=t_{1}+dt$ and $X(t)$ the state vector at the time $t$ the contractor is based on the following equation: 
 
 \begin{align}
 X_{0}(t_{2}) &= X_{0}(t_{1}) + X_{3}(t_{1})*\textnormal{cos}(X_{2}(t_{1}))*dt\,\\
@@ -85,7 +85,7 @@ the position is needed continuously ( > 10 Hz). At each iteration the algorithm~
    $distC$ : contractor of distance\\
    $robotStateC$ : contractor of robot estimate\\
    $update$: function which update the estimate of X by taking into account the proprioceptive data.\\
-   $box_{beacons}$ : Set of the estimate of the beacons  
+   $box_{beacons}$ : Set of the estimate of the beacons 
 \STATE $X \leftarrow update(X,[\,dt]\,v(t),\theta(t),u(t)) $
 \STATE $Past  \leftarrow Past + \{(X,[\,dt]\,,measure_{beacons})\} $
 \STATE $n  \leftarrow n+1 $
@@ -120,15 +120,15 @@ When receiving data from a beacon a contractor over the distance between beacon 
 \begin{algorithmic}[1]
 \REQUIRE $measure_{beacons}$: (set of measures between two iteration)\\
    $box_{beacons}$ : Set of the estimate of the beacons\\
-   $Bsender$ : beacon which has transmitted the data   
+   $Bsender$ : beacon which has transmitted the data  
 \FOR{$measure_{beacon} \in measure_{beacons}$}\label{op:distB_3}
 \STATE $(box_{Bsender},box_{beacon},measure_{beacon}) \leftarrow distC(box_{Bsender},box_{beacon},measure_{beacon})$
 \ENDFOR
 \end{algorithmic}
 \end{algorithm}
 
-But as written in ~\ref{sssec:contract} the estimate box for the beacons can be paved, that change the precedents 
-algorithms when treating with a beacon estimate (\ref{op:distB_1},\ref{op:distB_2},\ref{op:distB_3}). A algorithm for the distance constraint between two set of boxes must be executed:
+But as written in ~\ref{sssec:contract} the estimate box for the beacons can be paved, that change the precedents
+algorithms when treating with a beacon estimate (\ref{op:distB_1},\ref{op:distB_2},\ref{op:distB_3}). An algorithm for the distance constraint between two set of boxes must be executed:
 
 \begin{algorithm}[H]
 \caption{Distance Constraint Application on two set of boxes }
@@ -155,7 +155,7 @@ With the algorithms~\ref{alg:iterSlam},~\ref{alg:distBetBeaconsSlam},~\ref{alg:d
 
 \subsection{With more robots}
 
-When using multiple robots, each robot can obtain the estimations of the map from the other robots (if there is transmission), in the context of the mission the first position is known (the box for the pose estimate has a little width depending on the GPS data) therefore the position of the boxes is sure between the robots. When receiving data from another robots, one robot will fuse the estimates of the beacons from the other robots with its own estimates:
+When using multiple robots, each robot can get the estimations of the map from the other robots (if there is transmission), in the context of the mission the first position is known (the box for the pose estimate has a little width depending on the GPS data) therefore the position of the boxes is sure between the robots. When receiving data from another robots, one robot will fuse the estimates of the beacons from the other robots with its own estimates:
 
 \begin{algorithm}[H]
 \caption{Fusion of beacon estimate between robots}
@@ -212,8 +212,8 @@ This last pass is used very often in area scanning with underwater vehicles.
 
 \subsection{Following the path and considering the other robots}
 
-The method chosen to control the robots for the path following and the obstacles avoidance is the potential field method. It has been chosen for its easy implementation and manipulation as itpermit to manage movable obstacles such as the other robots.
-The robot is seen as an electric particle in a electric field and respond to it with the relation:
+The method chosen to control the robots for the path following and the obstacles avoidance is the potential field method. It has been chosen for its easy implementation and manipulation as it permit to manage movable obstacles such as the other robots.
+The robot is seen as an electric particle in an electric field and respond to it with the relation:
 
 $\mathbf{f} = -\textnormal{grad}(V(\mathbf{p}))$ (page 77, ~\cite{jaulin2015mobile})\\
 

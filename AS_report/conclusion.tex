@@ -1,12 +1,13 @@
-% facilite comment ca c fait a implementer 
-%long a fairele slam
-%tuner en fonction du pc
-%generally pessimiste 
+The most necessitating part in this project was the programming of the slam node but the theory behind is comprehensible , the state equation linking together the poses over the time, and the measurement linking the beacon to the pose.The implemented version of the algorithm is a bit different from the original, with some safeguards and with limitations due to capacity of the current lining of PC (and embeddable PC).
 
-% a faire
-%refactoring
-%optimization
-%correction of errors
-%passage trois dimension
-%more path possibilite 
-%real experiment
+The scan of an area can be done with the created product but not with a good precision for now due to the remaining errors (in programming), therefore the program is more pessimist on the position of the robots and beacons to compensate those errors.\\
+
+What could be done in this project in the future:
+\begin{itemize}[label={$-$},itemsep=0cm,topsep=0cm]
+\item The correction of the programming errors crippling the program;
+\item A re-factoring of the code for a better comprehension from other users
+\item An optimization of the code to allow remembering more iteration
+\item Consider three dimension
+\item Add more path to the controller
+\item Make experiment on real robot
+\end{itemize}

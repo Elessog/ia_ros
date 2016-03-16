@@ -48,7 +48,7 @@ For this test, one robot is used with a sensor precision of 10cm  and a precisio
 \end{figure}
 
 With two robots communicating the estimations become more precise and allow a better path following(figure~\ref{fig:twoRobResEnd}.
-From them the it could continue to more robots but some errors have happened. Indeed sometime the estimation for a beacon is wrong, the boxes do not include the beacon. 
+From them the it could continue to more robots but some errors have happened. Indeed sometime the estimation for a beacon is wrong, the boxes do not include the beacon.
 
 \begin{figure}[H]
 \centering
@@ -57,5 +57,7 @@ From them the it could continue to more robots but some errors have happened. In
 \label{fig:errorEst}
 \end{figure}
 
-The interval method is supposed to give a guaranteed results therefore the problem has to come from the implementation,either there is wrong data in the input,dela in communication is too important(see subsection~\ref{ssec:delaycompProb}), or the state equation used is wrong( but it is working for the robot alone).
-By repeating the test it can be seen that the problem originates from the start of the test and there is wrong calculation on the pose estimate.
+The interval method is supposed to give a guaranteed results therefore the problem has to come from the implementation,either there is wrong data in the input,delay in communication is too important(see subsection~\ref{ssec:delaycompProb}), or the state equation used is wrong( but it is working for the robot alone).
+By repeating the test it can be seen that the problem originates from the start of the test and there is wrong calculation on the pose estimate.\\
+
+The avoidance algorithm with potential with is not working smoothly, the position of the robot is supposed to be the middle of the box and the potential is compute with the nearest corner of the other robot box. Then the distances are changing overtime and the chosen point from the other box can also change thus  creating an unstable potential field. To address this problem the computation could do the sum of each corner of the two boxes, which would then be the equivalent to compute the potential with the positions being the middle of the box for both robots.
