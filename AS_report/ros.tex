@@ -51,10 +51,11 @@ This functionality of ROS permits a big modularity for the programmer, an easy p
 For the simulation of the swarm slam project multiple nodes have been 
 created in order to represent accurate communication and sensing.
 
-\subparagraph*{IA\_MSGS}
+\subsubsection*{IA\_MSGS}
 
 ia\_msgs is an utility package to regroup created message in order to help to the communication of interval vector (in 2 and 3 dimension):\\
 
+ia\_msgs/StampedInterval
 \begin{itemize}[label={},itemsep=0cm,topsep=0cm]
 \item std\_msgs/Header header
   \begin{itemize}[label={},itemsep=0cm,topsep=0cm]
@@ -78,11 +79,49 @@ ia\_msgs is an utility package to regroup created message in order to help to th
     \end{itemize}
   \end{itemize}
 \end{itemize}
-\subparagraph*{RVIZ\_IA\_PLUGIN}
-\subparagraph*{IA\_SLAM}
-\subparagraph*{ROBOT\_SIMU}
-\subparagraph*{BEACON\_SIMU}
-\subparagraph*{TALK\_SIMU}
-\subparagraph*{IA\_CONTROLLER}
 
+The above message allows to send with a time stamp and a reference frame a list of a identified list of two dimensional boxes, used for example to send the estimates of the beacons.
 
+\subsubsection*{RVIZ\_IA\_PLUGIN}
+
+The rviz plug-in has been done to facilitate the visualization of the interval, rviz is on openGL based graphic visualizer incorporated in ROS. rviz can receive message and interpret them.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.13,angle=0]{picture_no_sivia.png}
+\caption{Example of rviz utilisation.}
+\label{fig:rvizEx}
+\end{figure}
+
+In figure~\ref{fig:rvizEx} rviz interpret the StampedInterval message (the blue rectangle), two frame, the real pose of the robot and the map frame seen as an ensemble of blue green and red arrow, the point cloud of beacons printed as spheres and the Interval message for the pose estimate of the robot.
+What has been done is the interpretation of the interval related messages.
+
+\subsubsection*{IA\_SLAM}
+
+It is the core of the project this node receive the sensor data (distance from the beacons), the information from other robots and the proprioceptive data such as the heading,speed motors order, then it estimate the position of the robot and the beacons by using the algorithm from the section~\ref{sec:slamtheory}.It has been implemented in c++ as it create an heavy load on the CPU.
+
+The arithmetic of intervals is done with the help of the IBEX library a c++ library towards intervals applications~\cite{ibex}
+\subsubsection*{ROBOT\_SIMU}
+
+This node simulate the robot by using the state equation (a car model for the project) its send the pose information to the beacon\_simu node and the proprioceptive information to the ia\_slam node.This node and all the other simulation nodes have been implemented in Python for easier manipulation.
+
+\subsubsection*{BEACON\_SIMU}
+
+This node simulate the sensor of the beacons,it knows the real pose of the beacons and the pose of the robot and considering the distance from the beacons it send or not the information every second (ia\_slam received a beacon data every tenth of a second).
+
+\subsubsection*{TALK\_SIMU}
+
+This node work on the same principle as the beacon\_simu node but for the discussion between robots, if the robots are close enough data is transferred with a limitation in time,a transfer can only happened three second after another to model the bandwidth limitation with underwater modem, the time was chosen arbitrarily but can be quickly changed.
+
+\subsubsection*{IA\_CONTROLLER}
+
+This node is receiving the position of the robot and the other robots in order to compute the motors orders to follow the path and avoid obstacles. The orders are then send to the robot\_simu node.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3,angle=0]{simple_slam_ros.png}
+\caption{Relation between nodes with one robot and no controller node.}
+\label{fig:oneRobGraph}
+\end{figure}
+
+In figure~\ref{fig:oneRobGraph} is represented the relation between nodeswith only one robots with the help of rqt\_graph, a ROS program. A  similar graph can be found in the appendix (figure~\ref{fig:completeNode}).

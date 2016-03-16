@@ -1,0 +1,15 @@
+\subsection{SLAM Heavy Load}
+
+The complexity of the algorithm~\ref{alg:iterSlam} for an iteration is $\sim\mathcal{O}(n.(nbDiv))$ where $n$ is the number of iteration effectuated and $nbDiv$ the maximum number of division of the estimate of the beacons.
+
+Therefore a such an algorithm is not viable for an online slam. The use of the precedent algorithm  generates increasing slow-downs over the time.
+
+To prevent those slow-downs the number of iterations can be limited by using the algorithm~\ref{alg:iterSlam} on the last n\_chosen iterations. It induces a loss of information but it is absorbable.
+
+To reduce again the load, the propagation constraint can be done with a reduce rate, not following the incoming sensor data. But the rate cannot be too reduce be can then measure of distance would be forgotten without being processed.
+
+\subsection{Message Delay}\label{ssec:delaycompProb}
+
+A message may be received but with ROS, it can have a important delay depending on the network and CPU load. Thus when receiving a distance to a beacon the robot can have travel a few decimetre and then measure of distance will be wrong when computed.
+
+To address this issue the interval of the measure is inflated of the distance effectuated by the robots between the measure and the computation. 
