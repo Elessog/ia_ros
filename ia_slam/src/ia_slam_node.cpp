@@ -47,13 +47,18 @@ IaSlam::IaSlam():start(false)
     internal_sub_ = nh_.subscribe(internal_topic_,1, &IaSlam::internRobot,this);
     external_interv_sub_ = nh_.subscribe(external_interv_topic_,1, &IaSlam::betweenRobot,this);
 
+
+
+    past.reserve(max_past_iter_);
+
+
     beacon_pub_ = nh_private_.advertise<ia_msgs::StampedInterval>("beacons", 2);
     toController_pub_ = nh_private_.advertise<ia_msgs::StampedInterval>("toControllerPoses", 2);
     position_pub_ = nh_private_.advertise<ia_msgs::Interval>("pose", 10);
     state_vector = new IntervalVector(4,Interval(0,0));
     dstate_vector = new IntervalVector(4,Interval(-50,50));
     temp_contract_vector = new IntervalVector(11,Interval(-50,50));
-    u = new IntervalVector(2,Interval(-1,1));
+    u = new IntervalVector(2,Interval(-1.2,1.2));
 
 ///////////////////////////////// Constraints ////////////////////////////////////////////////////
     x = new Variable();  //robot interval pose
@@ -70,9 +75,9 @@ IaSlam::IaSlam():start(false)
     distfunc= new Function(*x,*y,*ax,*ay,*d,sqr(*x-*ax)+sqr(*y-*ay)-sqr(*d)); // distance to beacon constraint
     updfunc= new Function(*X,*uX,*ud,*idt,Return(                             // state equation constraints
                                  (*X)[0] + (*X)[3]*cos((*X)[2])*(*idt) - (*uX)[0],
-                                 (*X)[1] + (*X)[3]*sin((*X)[2])*(*idt) - (*uX)[1],
+                                 (*X)[1] + (*X)[3]*sin((*X)[2])*(*idt) - (*uX)[1]/*,
                                  (*X)[2] + (*ud)[1]*(*idt) - (*uX)[2],
-                                 (*X)[3] + (*ud)[0]*(*idt) - (*uX)[3]
+                                 (*X)[3] + (*ud)[0]*(*idt) - (*uX)[3]*/
                                  ));
     c = new CtcFwdBwd(*distfunc);
     distContract =new CtcFixPoint(*c,1e-01);
@@ -82,27 +87,6 @@ IaSlam::IaSlam():start(false)
     updContract =new CtcFixPoint(*s,1e-01);
     //updContract =new Ctc3BCid(*fs);
 /////////////////////////////////////////////////////////////////////////////////////////////////
-    tf::TransformListener listener;
-    tf::StampedTransform transform;
-    double roll, pitch, yaw;
-    try{// get fisrt position (simulating start of mission with first known position )
-      listener.waitForTransform(map_frame_, base_frame_,
-                              ros::Time::now(), ros::Duration(3.0));
-      listener.lookupTransform(map_frame_, base_frame_, ros::Time(0), transform);
-      tf::Matrix3x3(transform.getRotation()).getRPY(roll, pitch, yaw);
-      (*state_vector)[0] = Interval(transform.getOrigin().x()).inflate(gps_precision_);
-      (*state_vector)[1] = Interval(transform.getOrigin().y()).inflate(gps_precision_);
-      (*state_vector)[2] = Interval(yaw).inflate(0.1);
-      (*state_vector)[3] = Interval(1).inflate(0.1);
-      start = true;
-      lastIter = ros::Time::now();
-      contractTime = ros::Time::now();
-    }
-    catch (tf::TransformException ex){
-      ROS_ERROR("%s",ex.what());
-      ros::shutdown();
-      exit(-1);
-    }
 }
 
 IaSlam::~IaSlam(){
@@ -144,8 +128,10 @@ IaSlam::~IaSlam(){
 
 void IaSlam::dump(){
   ofstream fichier;
-  std::string filepath = "~/data/dump.txt";
-  fichier.open(filepath.c_str(), ios::out | ios::trunc);
+  std::stringstream filepath;
+  filepath << "/home/elessog/data/dump_"<<base_frame_ <<".txt";
+  fichier.open(filepath.str().c_str(), ios::out | ios::trunc);
+  ROS_INFO("writing dump in %s, %d line",filepath.str().c_str(),(int) past.size());
   for (int i=0 ; i<past.size();i++){
     fichier << i << " " << pastDt[i] << ' ' <<  (*(past[i].first))[0].lb() << ' ' 
             << (*(past[i].first))[0].ub() << ' ' <<  (*(past[i].first))[1].lb()
@@ -162,6 +148,7 @@ void IaSlam::dump(){
 bool IaSlam::starterControl(ia_msgs::Start_Slam::Request &req,ia_msgs::Start_Slam::Response &res){
   start = req.demand; 
   res.result = true;
+  lastIter = ros::Time::now();
   return true;
 }
 
@@ -172,8 +159,11 @@ void IaSlam::spin(){
   {
     ros::spinOnce();
     loop_rate.sleep();
+    //ROS_INFO("start : %d",start);
     if (start)
        ia_iter();
+    publishInterval();
+
   }
 }
 
@@ -185,6 +175,30 @@ void IaSlam::updateOtherRobot(double dtt){
   }
 };
 
+void IaSlam::init(){
+    tf::TransformListener listener;
+    tf::StampedTransform transform;
+    double roll, pitch, yaw;
+    try{// get fisrt position (simulating start of mission with first known position )
+      listener.waitForTransform(map_frame_, base_frame_,
+                              ros::Time::now(), ros::Duration(3.0));
+      listener.lookupTransform(map_frame_, base_frame_, ros::Time(0), transform);
+      tf::Matrix3x3(transform.getRotation()).getRPY(roll, pitch, yaw);
+      (*state_vector)[0] = Interval(transform.getOrigin().x()).inflate(gps_precision_);
+      (*state_vector)[1] = Interval(transform.getOrigin().y()).inflate(gps_precision_);
+      (*state_vector)[2] = Interval(yaw).inflate(0.9);
+      (*state_vector)[3] = Interval(0.5).inflate(.7);
+      //start = true;
+      lastIter = ros::Time::now();
+      contractTime = ros::Time::now();
+    }
+    catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+      ros::shutdown();
+      exit(-1);
+    }
+}
+
 
 }//end namespace
 
@@ -194,7 +208,7 @@ int main(int argc,char **argv)
     ros::init(argc,argv,"ia_slam");
     
     IaSlam node;
-
+    node.init();
     node.spin();
 
     return 0;

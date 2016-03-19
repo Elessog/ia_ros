@@ -32,6 +32,7 @@ class robot_handler(object):
             if (handler.is_close_enough(self.position) and not self.id == handler.get_id()):
                if len(msg.data) > 0:
                 msgT =  copy.deepcopy(msg)
+                msgT.header.stamp = rospy.Time.now()
                 msgT.data[0].data[1].width = m.sqrt(handler.get_distance2(self.position))
                 handler.send(msgT)
 

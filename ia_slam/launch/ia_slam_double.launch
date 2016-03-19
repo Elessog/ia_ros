@@ -11,7 +11,7 @@
   <param name="ros_rate"  value="30"/>
   <param name="nb_outliers"  value="3"/>
   <param name="max_box"  value="10"/>
-  <param name="gps_precision"  value="0.1"/>
+  <param name="gps_precision"  value="0.7"/>
   <param name="division_box_rate" value="3"/>
 </node>
 
@@ -25,7 +25,7 @@
   <param name="ros_rate"  value="30"/>
   <param name="nb_outliers"  value="3"/>
   <param name="max_box"  value="10"/>
-  <param name="gps_precision"  value="0.1"/>
+  <param name="gps_precision"  value="0.7"/>
   <param name="division_box_rate" value="3"/>
 </node>
 

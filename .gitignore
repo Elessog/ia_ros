@@ -27,6 +27,5 @@
 *.out
 *.app
 
-#python
-
+#
 *.pyc

@@ -1,51 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-
-<arg name="max_iter" default="1000"/> 
-
-<node pkg="ia_slam" type="ia_slam_node" name="ia_slam1" output="screen">
-  <param name="map_frame"  value="map"/>
-  <param name="robot_frame"  value="robot1"/>
-  <param name="beacon_topic"  value="beacon_echo1"/>
-  <param name="internal_topic"  value="robot_data1"/>
-  <param name="extern_robot_topic" value="extern_robot1"/>
-  <param name="sensorPrecision"  value="0.5"/>
-  <param name="ros_rate"  value="30"/>
-  <param name="nb_outliers"  value="3"/>
-  <param name="max_past_iter"  value="$(arg max_iter)"/>
-  <param name="gps_precision"  value="1"/>
-  <param name="division_box_rate" value="3"/>
-  <param name="id_robot" value="1"/>
-</node>
-
-<node pkg="ia_slam" type="ia_slam_node" name="ia_slam2" output="screen">
-  <param name="map_frame"  value="map"/>
-  <param name="robot_frame"  value="robot2"/>
-  <param name="beacon_topic"  value="beacon_echo2"/>
-  <param name="internal_topic"  value="robot_data2"/>
-  <param name="extern_robot_topic" value="extern_robot2"/>
-  <param name="sensorPrecision"  value="0.5"/>
-  <param name="ros_rate"  value="30"/>
-  <param name="nb_outliers"  value="3"/>
-  <param name="max_past_iter"  value="$(arg max_iter)"/>
-  <param name="gps_precision"  value="1"/>
-  <param name="division_box_rate" value="3"/>
-  <param name="id_robot" value="2"/>
-</node>
-
-<node pkg="ia_slam" type="ia_slam_node" name="ia_slam3" output="screen">
-  <param name="map_frame"  value="map"/>
-  <param name="robot_frame"  value="robot3"/>
-  <param name="beacon_topic"  value="beacon_echo3"/>
-  <param name="internal_topic"  value="robot_data3"/>
-  <param name="extern_robot_topic" value="extern_robot3"/>
-  <param name="sensorPrecision"  value="0.5"/>
-  <param name="ros_rate"  value="30"/>
-  <param name="nb_outliers"  value="3"/>
-  <param name="max_past_iter"  value="$(arg max_iter)"/>
-  <param name="gps_precision"  value="1"/>
-  <param name="division_box_rate" value="3"/>
-  <param name="id_robot" value="3"/>
-</node>
-
+  <include file="$(find ia_slam)/launch/ia_slam_gen.launch">       
+     <arg name="id_rob" value="1" />
+  </include> 
+  <include file="$(find ia_slam)/launch/ia_slam_gen.launch">       
+     <arg name="id_rob" value="2" />
+  </include> 
+  <include file="$(find ia_slam)/launch/ia_slam_gen.launch">       
+     <arg name="id_rob" value="3" />
+  </include> 
 </launch>

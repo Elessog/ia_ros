@@ -40,6 +40,7 @@ class IaSlam
    IaSlam();
    ~IaSlam();
    
+   void init();
    void spin();
  private:
    double k1_;

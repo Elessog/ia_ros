@@ -16,7 +16,7 @@ def ShutdownCallback():
 
 def computeCornerPotentiel(x,otherX):
     dist2 = (otherX[0]-x[0])**2+(otherX[1]-x[1])**2
-    return (-(otherX[0]-x[0])/dist2,-(otherX[1]-x[1])/dist2,dist2)
+    return ((otherX[0]-x[0])/dist2,(otherX[1]-x[1])/dist2,dist2)
 
 def computePotentielForOtherRobot(x,w,robot):
     res = [0,0,0,0]
@@ -140,6 +140,10 @@ def box_callback(msg):
     if not test:
        start = True
        x = [msg.data[0].data[0].position.x+msg.data[0].data[0].width/2.0,msg.data[0].data[0].position.y+msg.data[0].data[0].height/2.0]
+       if np.isnan(x[0]) or np.isnan(x[1]):
+          rospy.loginfo("error received nan")
+       else:
+          rospy.loginfo("[%f,%f]"%(x[0],x[1]))
     with Lock:
       robots = []
       for data,i in zip(msg.data,range(len(msg.data))):
@@ -203,6 +207,6 @@ if __name__ == '__main__':
     while not start and not rospy.is_shutdown():
          rospy.sleep(1.0/2.0)
     rospy.loginfo("start programme")
-    #goto_strategy()
+    goto_strategy()
     patrol_strategy()
     rospy.loginfo("end programme")

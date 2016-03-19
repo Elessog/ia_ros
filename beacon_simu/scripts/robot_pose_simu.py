@@ -15,21 +15,11 @@ def control_callback(msg):
     u[0] = msg.data[0]
     u[1] = msg.data[1]
 
-
-def f(x,u):
-    xdot=np.array([x[3]*cos(x[4])*cos(x[2]),
-    x[3]*cos(x[4])*sin(x[2]),
-    x[3]*sin(x[4])/3,
-    u[0],
-    0])
-    return xdot
-
 def f2(x,u):
     xdot=np.array([x[3]*cos(x[2]),
     x[3]*sin(x[2]),
     u[1],
-    u[0],
-    0])
+    u[0]])
     return xdot
 
 def onecar(x): 
@@ -51,15 +41,15 @@ def onecar(x):
        msg.pose.position.x = x[0]
        msg.pose.position.y = x[1]
        msgIntern = Float64MultiArray()
-       msgIntern.data.append(u[0])
-       msgIntern.data.append(u[1])
-       msgIntern.data.append(x[2])
+       msgIntern.data.append(u[0])#speed order
+       msgIntern.data.append(u[1])#turn order
+       msgIntern.data.append(x[2])#heading
+       msgIntern.data.append(x[3])#speed
        msgIntern.data.append(x[3])
-       msgIntern.data.append(x[4])
 
        ## only used in controller test
-       msgIntern.data.append(x[0])
-       msgIntern.data.append(x[1])
+       msgIntern.data.append(x[0])#pose x
+       msgIntern.data.append(x[1])#pose y
 
        pub.publish(msg)
        if show_reach:
@@ -136,12 +126,12 @@ if __name__ == '__main__':
     pub_intern = rospy.Publisher(data_topic, Float64MultiArray, queue_size=10)
     ##
     if typeMove == 0:
-       onecar(np.array([5,-5,np.pi/3,0.5,0.5]))
+       onecar(np.array([5,-5,np.pi/3,0.5]))
     elif typeMove==1:
-       onecar(np.array([0,0,np.pi/3,0.5,0.6]))
+       onecar(np.array([0,0,np.pi/3,0.5]))
     elif typeMove == 2:
-       onecar(np.array([2,2,0,0.5,-0.4]))
+       onecar(np.array([2,2,0,-0.5]))
     else:
        rospy.Subscriber(controller_topic, Float64MultiArray,control_callback)
-       onecar(np.array([x_pos,y_pos,theta_pos,0,0]))
+       onecar(np.array([x_pos,y_pos,theta_pos,0]))
 
