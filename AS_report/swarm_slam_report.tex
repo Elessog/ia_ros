@@ -82,7 +82,39 @@
 \centering
 \includegraphics[scale=0.20,angle=-90]{ProjectGantSWARMSLAM-2.png}
 \end{figure}
-%%\chapter{Appendix 3}
+\chapter{Appendix 3}
+
+\section*{How to run the code}
+
+
+Download the \href{http://www.ibex-lib.org/}{Ibex Library}\\
+
+Install \href{http://wiki.ros.org/indigo/Installation}{ROS}\\
+
+Follow ROS tutorial on how to \href{http://wiki.ros.org/ROS/Tutorials/catkin/CreatingPackage}{create packages}\\
+
+In your catkin source directories :\\
+
+\begin{lstlisting}[language=bash]
+  $ git clone https://github.com/Elessog/ia_ros.git
+  $ cd ..
+  $ catkin_make
+  $ source devel/setup.bash
+\end{lstlisting}
+
+If Ibex error set IBEX\_ROOT in ia\_ros/ia\_slam/CMakeList.txt\\
+
+To launch three robots (on different terminal):
+
+\begin{lstlisting}[language=bash]
+  $ roslaunch beacon\_simu ia\_simu\_control.launch
+  $ roslaunch ia\_slam ia\_slam\_triple.launch 
+  $ rviz
+\end{lstlisting}
+
+Then set-up rviz via add/byTopic or via the rviz config file and run serviceRob.bash to start the robots.
+
+
 %----------------------------------------------------------------------------------------
 %	BIBLIOGRAPHIE
 %----------------------------------------------------------------------------------------

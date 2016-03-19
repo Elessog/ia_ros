@@ -27,7 +27,7 @@ For the test, one robot is used with a sensor precision of 10cm  and a precision
 
 The images~\ref{fig:oneRobResDeb} and~\ref{fig:oneRobResEnd} are obtained with the robot going directly to the scanning without doing the first pass (see subsection~\ref{ssec:pathgen}).
 
-The estimate of the beacons has not got good quality the estimate for one beacon are spread out around it therefore the estimate of the robot  is not good and consequently the controller can't correctly handle the robot and in figure~\ref{fig:oneRobResDeb} the robot does not follow exactly the path (green line) and has an offset.
+The estimate of the beacons has not a good quality,and the estimate boxes for one beacon are spread out around it therefore the estimate of the robot  is bad and consequently the controller can't correctly handle the robot and in figure~\ref{fig:oneRobResDeb} the robot does not follow exactly the path (green line) and has an offset.
 
 \section{Two Robots}
 
@@ -60,4 +60,4 @@ From them the it could continue to more robots but some errors have happened. In
 The interval method is supposed to give a guaranteed results therefore the problem has to come from the implementation,either there is wrong data in the input,delay in communication is too important(see subsection~\ref{ssec:delaycompProb}), or the state equation used is wrong( but it is working for the robot alone).
 By repeating the test it can be seen that the problem originates from the start of the test and there is wrong calculation on the pose estimate.\\
 
-The avoidance algorithm with potential with is not working smoothly, the position of the robot is supposed to be the middle of the box and the potential is compute with the nearest corner of the other robot box. Then the distances are changing overtime and the chosen point from the other box can also change thus  creating an unstable potential field. To address this problem the computation could do the sum of each corner of the two boxes, which would then be the equivalent to compute the potential with the positions being the middle of the box for both robots.
+The avoidance algorithm with potential field method is not working smoothly, the position of the robot is supposed to be the middle of the box and the potential is compute with the nearest corner of the other robot box. Then the distances are changing overtime and the chosen point from the other box can also change thus  creating an unstable potential field. To address this problem the computation could do the sum of each corner of the two boxes, which would then be the equivalent to compute the potential with the positions being the middle of the box for both robots.
